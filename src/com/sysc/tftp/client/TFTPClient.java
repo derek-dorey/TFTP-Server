@@ -218,7 +218,9 @@ public class TFTPClient {
     * than 512 bytes it is the last packet for the file.
     */
    public boolean lastBlock(DatagramPacket datagramPacket) {
-	   if (datagramPacket.getLength() < 512) {
+	   
+	   //If datagram packet length is less than MAX_PACKET_SIZE its the last block
+	   if (datagramPacket.getLength() < MAX_PACKET_SIZE) {
 		   return true;
 	   } else {
 		   return false;
@@ -234,7 +236,7 @@ public class TFTPClient {
        int sendPort;								//Port we are sending the packet to
        int tid;										//Random transfer ID generated 
 	   Mode run = Mode.NORMAL; 						//Normal sends to server directly, TEST sends to simulator
-	   DatagramPacket sendPacket;	//A packet to send request to server
+	   DatagramPacket sendPacket;					//A packet to send request to server
 	   byte[] ackData = new byte[ACK_DATA_SIZE];	//Byte array for packet data
 	   
 	   //Start of Try/Catch
@@ -407,4 +409,6 @@ public class TFTPClient {
       c.sendFile("test.txt");
    }
    
+   
 }
+
