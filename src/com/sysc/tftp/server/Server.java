@@ -1,16 +1,12 @@
 package com.sysc.tftp.server;
 
-//TFTPServer.java
-//This class is the server side of a simple TFTP server based on
-//UDP/IP. The server receives a read or write packet from a client and
-//sends back the appropriate response without any actual file transfer.
-//One socket (69) is used to receive (it stays open) and another for each response. 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
 
-public class Server {
+public class Server implements Runnable {
 
 	// types of requests we can receive
 	public static enum Request {
@@ -22,8 +18,10 @@ public class Server {
 	public static final byte[] writeResp = { 0, 4, 0, 0 };
 
 	// UDP datagram packets and sockets used to send / receive
-	private DatagramPacket sendPacket, receivePacket;
-	private DatagramSocket receiveSocket, sendSocket;
+	private DatagramPacket receivePacket;
+	private DatagramSocket receiveSocket;
+
+	private Thread thread = null;
 
 	public Server() {
 		try {
@@ -37,47 +35,80 @@ public class Server {
 		}
 	}
 
-	public void receiveAndSendTFTP() throws Exception {
+	@Override
+	public void run() {
+		try {
+			while (true) {
+				long threadId = Thread.currentThread().getId(); // for printing, to show which thread is doing what
+				byte[] data = new byte[100];
+				receivePacket = new DatagramPacket(data, data.length);
 
-		byte[] data, response = new byte[4];
+				System.out.println("[" + threadId + "]: " + "Server: Waiting for packet.");
+				// Block until a datagram packet is received from receiveSocket.
+				try {
+					receiveSocket.receive(receivePacket);
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 
-		Request req; // READ, WRITE or ERROR
+				// Process the received datagram.
+				System.out.println("[" + threadId + "]: " + "Server: Packet received:");
+				System.out.println("[" + threadId + "]: " + "From host: " + receivePacket.getAddress());
+				System.out.println("[" + threadId + "]: " + "Host port: " + receivePacket.getPort());
+				int len = receivePacket.getLength();
+				System.out.println("[" + threadId + "]: " + "Length: " + len);
+				System.out.println("[" + threadId + "]: " + "Containing: ");
 
-		String filename, mode;
-		int len, j = 0, k = 0;
+				new Thread(new ClientConnection(data, len, receivePacket.getAddress(), receivePacket.getPort())).start();;
 
-		for (;;) { // loop forever
-			// Construct a DatagramPacket for receiving packets up
-			// to 100 bytes long (the length of the byte array).
-
-			data = new byte[100];
-			receivePacket = new DatagramPacket(data, data.length);
-
-			System.out.println("Server: Waiting for packet.");
-			// Block until a datagram packet is received from receiveSocket.
-			try {
-				receiveSocket.receive(receivePacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-			// Process the received datagram.
-			System.out.println("Server: Packet received:");
-			System.out.println("From host: " + receivePacket.getAddress());
-			System.out.println("Host port: " + receivePacket.getPort());
-			len = receivePacket.getLength();
-			System.out.println("Length: " + len);
-			System.out.println("Containing: ");
+	public void start() {
+		if (thread == null) {
+			thread = new Thread(this);
+			thread.start();
+		}
+	}
 
-			// print the bytes
-			for (j = 0; j < len; j++) {
-				System.out.println("byte " + j + " " + data[j]);
-			}
+	
+	/**
+	 * 
+	 * @author lexibrown
+	 * Made client connection class because when project grows file transfer
+	 * will be more code and we shouldn't throw it all in the server file and
+	 * make this long file
+	 * 
+	 * So, in the future, this class can go in it's own file
+	 *
+	 */
+	private class ClientConnection implements Runnable {
 
-			// Form a String from the byte array.
-			String received = new String(data, 0, len);
-			System.out.println(received);
+		private Thread thread = null;
+		private byte[] data = null;
+		private int len = 0, clientPort = 0;
+		private InetAddress clientIP = null;
+
+		public ClientConnection(byte[] data, int len, InetAddress ip, int port) {
+			this.data = data;
+			this.len = len;
+			this.clientIP = ip;
+			this.clientPort = port;
+		}
+
+		@Override
+		public void run() {
+			long threadId = Thread.currentThread().getId(); // for printing, to show which thread is doing what
+			byte[] response = new byte[4];
+
+			Request req; // READ, WRITE or ERROR
+
+			String filename, mode;
+			int j = 0, k = 0;
 
 			// If it's a read, send back DATA (03) block 1
 			// If it's a write, send back ACK (04) block 0
@@ -127,43 +158,24 @@ public class Server {
 			} else if (req == Request.WRITE) { // for Write it's 0400
 				response = writeResp;
 			} else { // it was invalid, just quit
-				throw new Exception("Not yet implemented");
+				// TODO
 			}
 
-			// Construct a datagram packet that is to be sent to a specified
-			// port
-			// on a specified host.
-			// The arguments are:
-			// data - the packet data (a byte array). This is the response.
-			// receivePacket.getLength() - the length of the packet data.
-			// This is the length of the msg we just created.
-			// receivePacket.getAddress() - the Internet address of the
-			// destination host. Since we want to send a packet back to the
-			// client, we extract the address of the machine where the
-			// client is running from the datagram that was sent to us by
-			// the client.
-			// receivePacket.getPort() - the destination port number on the
-			// destination host where the client is running. The client
-			// sends and receives datagrams through the same socket/port,
-			// so we extract the port that the client used to send us the
-			// datagram, and use that as the destination port for the TFTP
-			// packet.
+			DatagramPacket sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
 
-			sendPacket = new DatagramPacket(response, response.length, receivePacket.getAddress(),
-					receivePacket.getPort());
-
-			System.out.println("Server: Sending packet:");
-			System.out.println("To host: " + sendPacket.getAddress());
-			System.out.println("Destination host port: " + sendPacket.getPort());
+			System.out.println("[" + threadId + "]: " + "Server: Sending packet:");
+			System.out.println("[" + threadId + "]: " + "To host: " + sendPacket.getAddress());
+			System.out.println("[" + threadId + "]: " + "Destination host port: " + sendPacket.getPort());
 			len = sendPacket.getLength();
-			System.out.println("Length: " + len);
-			System.out.println("Containing: ");
+			System.out.println("[" + threadId + "]: " + "Length: " + len);
+			System.out.println("[" + threadId + "]: " + "Containing: ");
 			for (j = 0; j < len; j++) {
 				System.out.println("byte " + j + " " + response[j]);
 			}
 
 			// Send the datagram packet to the client via a new socket.
 
+			DatagramSocket sendSocket = null;
 			try {
 				// Construct a new datagram socket and bind it to any port
 				// on the local host machine. This socket will be used to
@@ -181,17 +193,25 @@ public class Server {
 				System.exit(1);
 			}
 
-			System.out.println("Server: packet sent using port " + sendSocket.getLocalPort());
+			System.out.println("[" + threadId + "]: " + "Server: packet sent using port " + sendSocket.getLocalPort());
 			System.out.println();
 
 			// We're finished with this socket, so close it.
 			sendSocket.close();
-		} // end of loop
+		}
+
+		public void start() {
+			if (thread == null) {
+				thread = new Thread(this);
+				thread.start();
+			}
+		}
 
 	}
 
 	public static void main(String args[]) throws Exception {
-		Server c = new Server();
-		c.receiveAndSendTFTP();
+		Server s = new Server();
+		s.start();
 	}
+
 }
