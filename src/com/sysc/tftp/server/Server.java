@@ -5,6 +5,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+import com.sysc.tftp.utils.Variables;
+
 public class Server implements Runnable {
 
 	// UDP datagram packets and sockets used to send / receive
@@ -18,7 +20,7 @@ public class Server implements Runnable {
 			// Construct a datagram socket and bind it to port 69
 			// on the local host machine. This socket will be used to
 			// receive UDP Datagram packets.
-			receiveSocket = new DatagramSocket(69);
+			receiveSocket = new DatagramSocket(Variables.SERVER_PORT);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -33,7 +35,7 @@ public class Server implements Runnable {
 																// to show which
 																// thread is
 																// doing what
-				byte[] data = new byte[100];
+				byte[] data = new byte[Variables.MAX_PACKET_SIZE];
 				receivePacket = new DatagramPacket(data, data.length);
 
 				System.out.println("[" + threadId + "]: " + "Server: Waiting for packet.");

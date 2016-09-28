@@ -10,23 +10,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
+import com.sysc.tftp.utils.Variables;
+import com.sysc.tftp.utils.Variables.Request;
+
 public class ClientConnection implements Runnable {
 
 	private DatagramPacket receivePacket = null, sendPacket = null;
 	private DatagramSocket sendReceiveSocket = null;
 	
-	// types of requests we can receive
-	private static enum Request {
-		READ, WRITE, ERROR
-	};
-
-	// responses for valid requests
-	private static final byte[] readResp = { 0, 3, 0, 1 };
-	private static final byte[] writeResp = { 0, 4, 0, 0 };
-
-	private static final byte[] DATA = { 0, 3, 0, 1 };
-	private static final byte[] ACK = { 0, 4, 0, 0 };
-
 	private byte[] data = null;
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
@@ -46,9 +37,6 @@ public class ClientConnection implements Runnable {
 		byte[] response = null;
 		String filename = null;
 
-		// If it's a read, send back DATA (03) block 1
-		// If it's a write, send back ACK (04) block 0
-
 		Request req = verifyRequest(data);
 		if (req == null || req == Request.ERROR) {
 			// TODO
@@ -58,10 +46,10 @@ public class ClientConnection implements Runnable {
 		filename = pullFilename(data);
 		
 		// Create a response.
-		if (req == Request.READ) { // for Read it's 0301
-			response = readResp;
-		} else if (req == Request.WRITE) { // for Write it's 0400
-			response = writeResp;
+		if (req == Request.RRQ) {
+			response = Variables.readResp;
+		} else if (req == Request.WRQ) {
+			response = Variables.writeResp;
 		}
 
 		sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
@@ -69,19 +57,14 @@ public class ClientConnection implements Runnable {
 		System.out.println("[" + threadId + "]: " + "Server: Sending packet:");
 		System.out.println("[" + threadId + "]: " + "To host: " + sendPacket.getAddress());
 		System.out.println("[" + threadId + "]: " + "Destination host port: " + sendPacket.getPort());
-		len = sendPacket.getLength();
-		System.out.println("[" + threadId + "]: " + "Length: " + len);
+		int length = sendPacket.getLength();
+		System.out.println("[" + threadId + "]: " + "Length: " + length);
 		System.out.println("[" + threadId + "]: " + "Containing: ");
-		for (int j = 0; j < len; j++) {
+		for (int j = 0; j < length; j++) {
 			System.out.println("byte " + j + " " + response[j]);
 		}
 
-		// Send the datagram packet to the client via a new socket.
-
 		try {
-			// Construct a new datagram socket and bind it to any port
-			// on the local host machine. This socket will be used to
-			// send UDP Datagram packets.
 			sendReceiveSocket = new DatagramSocket();
 			sendReceiveSocket.send(sendPacket);
 		} catch (SocketException se) {
@@ -94,10 +77,9 @@ public class ClientConnection implements Runnable {
 
 		System.out.println("[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
 		System.out.println();
-
 		
 		while (true) {
-			byte[] received = new byte[100];
+			byte[] received = new byte[Variables.MAX_PACKET_SIZE];
 			receivePacket = new DatagramPacket(received, received.length);
 
 			System.out.println("[" + threadId + "]: " + "Server: Waiting for packet.");
@@ -109,7 +91,7 @@ public class ClientConnection implements Runnable {
 				System.exit(1);
 			}
 			
-			if (req == Request.READ) {
+			if (req == Request.RRQ) {
 				if (verifyACK(received)) {
 					// TODO
 					break;
@@ -118,10 +100,10 @@ public class ClientConnection implements Runnable {
 					// issue, request is not correct
 					break;
 				}
-			} else if (req == Request.WRITE) {
+			} else if (req == Request.WRQ) {
 				if (verifyDATA(received)) {
-					writeToFile(filename, Arrays.copyOfRange(received, DATA.length, received.length));
-					sendPacket = new DatagramPacket(ACK, ACK.length, clientIP, clientPort);
+					writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+					sendPacket = new DatagramPacket(Variables.ACK, Variables.ACK.length, clientIP, clientPort);
 				} else {
 					// TODO
 					// issue, request is not correct
@@ -132,10 +114,10 @@ public class ClientConnection implements Runnable {
 			System.out.println("[" + threadId + "]: " + "Server: Sending packet:");
 			System.out.println("[" + threadId + "]: " + "To host: " + sendPacket.getAddress());
 			System.out.println("[" + threadId + "]: " + "Destination host port: " + sendPacket.getPort());
-			len = sendPacket.getLength();
-			System.out.println("[" + threadId + "]: " + "Length: " + len);
+			length = sendPacket.getLength();
+			System.out.println("[" + threadId + "]: " + "Length: " + length);
 			System.out.println("[" + threadId + "]: " + "Containing: ");
-			for (int j = 0; j < len; j++) {
+			for (int j = 0; j < length; j++) {
 				System.out.println("byte " + j + " " + response[j]);
 			}
 
@@ -156,9 +138,9 @@ public class ClientConnection implements Runnable {
 	}
 
 	public byte[] packageRead(String filename) throws IOException {
+		// TODO
 		Path path = Paths.get("src/files/" + filename);
 		byte[] data = Files.readAllBytes(path);
-
 		return data;
 	}
 
@@ -174,8 +156,8 @@ public class ClientConnection implements Runnable {
 	}
 
 	public boolean verifyACK(byte[] data) {
-		for (int i = 0; i < ACK.length; i++) {
-			if (ACK[i] != data[i]) {
+		for (int i = 0; i < Variables.ACK.length; i++) {
+			if (Variables.ACK[i] != data[i]) {
 				return false;
 			}
 		}
@@ -183,11 +165,11 @@ public class ClientConnection implements Runnable {
 	}
 	
 	public boolean verifyDATA(byte[] data) {
-		if (data.length <= DATA.length) { // no data in message
+		if (data.length <= Variables.DATA.length) { // no data in message
 			return false;
 		}
-		for (int i = 0; i < DATA.length; i++) {
-			if (DATA[i] != data[i]) {
+		for (int i = 0; i < Variables.DATA.length; i++) {
+			if (Variables.DATA[i] != data[i]) {
 				return false;
 			}
 		}
@@ -201,9 +183,9 @@ public class ClientConnection implements Runnable {
 		if (data[0] != 0) {
 			return Request.ERROR; // bad
 		} else if (data[1] == 1) {
-			req = Request.READ; // could be read
+			req = Request.RRQ; // could be read
 		} else if (data[1] == 2) {
-			req = Request.WRITE; // could be write
+			req = Request.WRQ; // could be write
 		} else {
 			return Request.ERROR; // bad
 		}
