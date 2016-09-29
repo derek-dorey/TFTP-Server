@@ -337,16 +337,19 @@ public class Client {
 				
 				//Initialize receivePacket
 				receivePacket = new DatagramPacket(ackData, ackData.length);	   
-					
-				System.out.println("Received a packet!");
 				
-		    	   for (int j = 0; j < ackData.length; j++) {
-		    		   System.out.println("byte " + j + " " + ackData[j]);
-		    	   }
+				System.out.println("Client: Waiting for packet.");
+		        
+				// Block until a datagram is received via sendReceiveSocket.
+				sendReceiveSocket.receive(receivePacket);
+
+				System.out.println("Received a packet!");
 		    	   
 				//If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
 				if (ackData[0] == 0 && ackData[1] == 4) {
     		   
+					System.out.println("Received ACK response");
+					
 					//Data packet op code and block #
 					data[0] = 0;
 					data[1] = 3;
