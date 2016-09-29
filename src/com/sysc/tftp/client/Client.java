@@ -7,6 +7,8 @@ import java.io.*;
 import java.net.*;
 import com.sysc.tftp.utils.Variables;
 
+import sun.security.util.Debug;
+
 public class Client {
 
    private DatagramPacket sendPacket, receivePacket;	
@@ -326,6 +328,8 @@ public class Client {
 	   //Start of Try/Catch
 	   try {
 		   
+		   System.out.println("Sending file data...");
+		   
 		   	//Open new FileOutputStream to place file
 			outgoing = new FileInputStream(filePath);   
 		 
@@ -334,6 +338,12 @@ public class Client {
 				//Initialize receivePacket
 				receivePacket = new DatagramPacket(ackData, ackData.length);	   
 					
+				System.out.println("Received a packet!");
+				
+		    	   for (int j = 0; j < ackData.length; j++) {
+		    		   System.out.println("byte " + j + " " + ackData[j]);
+		    	   }
+		    	   
 				//If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
 				if (ackData[0] == 0 && ackData[1] == 4) {
     		   
