@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 import com.sysc.tftp.utils.Variables;
 
@@ -14,6 +17,11 @@ public class Server implements Runnable {
 	private DatagramSocket receiveSocket;
 
 	private Thread thread = null;
+	private Thread toExit = null;
+
+	private boolean running = true;
+	
+	private List<Thread> threads = new ArrayList<Thread>();
 
 	public Server() {
 		try {
@@ -30,7 +38,7 @@ public class Server implements Runnable {
 	@Override
 	public void run() {
 		try {
-			while (true) {
+			while (running) {
 				long threadId = Thread.currentThread().getId(); // for printing,
 																// to show which
 																// thread is
@@ -42,6 +50,9 @@ public class Server implements Runnable {
 				// Block until a datagram packet is received from receiveSocket.
 				try {
 					receiveSocket.receive(receivePacket);
+				} catch (SocketException se) {
+					running = false;
+					continue;
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(1);
@@ -55,13 +66,15 @@ public class Server implements Runnable {
 				System.out.println("[" + threadId + "]: " + "Length: " + len);
 				System.out.println("[" + threadId + "]: " + "Containing: ");
 
-				new Thread(new ClientConnection(data, len, receivePacket.getAddress(), receivePacket.getPort()))
-						.start();
-
+				Thread t = new Thread(
+						new ClientConnection(data, len, receivePacket.getAddress(), receivePacket.getPort()));
+				threads.add(t);
+				t.start();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		System.out.println("Exiting...");
 	}
 
 	public void start() {
@@ -69,6 +82,41 @@ public class Server implements Runnable {
 			thread = new Thread(this);
 			thread.start();
 		}
+		if (toExit == null) {
+			toExit = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					Scanner scan = new Scanner(System.in);
+					do {
+						// TODO
+						System.out.println("Type '!quit' to shutdown server");
+						String s = scan.nextLine();
+						if ("!quit".equals(s)) {
+							closeThreads();
+							break;
+						}
+					} while (scan.hasNext());
+					scan.close();
+				}
+			});
+			toExit.start();
+		}
+	}
+
+	public void closeThreads() {
+		System.out.println("Closing connections...");
+		thread.interrupt();
+		running = false;
+		for (int i = 0; i < threads.size(); i++) {
+			try {
+				threads.get(i).join();
+			} catch (InterruptedException e) {
+				System.out.println("Failed to join thread");
+				e.printStackTrace();
+			}
+		}
+		System.out.println("Connections closed.");
+		receiveSocket.close();
 	}
 
 	public static void main(String args[]) throws Exception {
