@@ -47,9 +47,9 @@ public class ClientConnection implements Runnable {
 		
 		// Create a response.
 		if (req == Request.RRQ) {
-			response = Variables.readResp;
+			response = Variables.DATA;
 		} else if (req == Request.WRQ) {
-			response = Variables.writeResp;
+			response = Variables.ACK;
 		}
 
 		sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);

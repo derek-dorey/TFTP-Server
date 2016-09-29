@@ -88,15 +88,14 @@ public class Server implements Runnable {
 				public void run() {
 					Scanner scan = new Scanner(System.in);
 					do {
-						// TODO
 						System.out.println("Type '!quit' to shutdown server");
 						String s = scan.nextLine();
 						if ("!quit".equals(s)) {
+							scan.close();
 							closeThreads();
 							break;
 						}
 					} while (scan.hasNext());
-					scan.close();
 				}
 			});
 			toExit.start();
