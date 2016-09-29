@@ -31,28 +31,31 @@ public class Client {
     * takes place.
     */
    private byte[] newRequest(byte rqType, String fileName) {
-      byte[] msg = new byte[Variables.MAX_PACKET_SIZE], // Message we send
+      byte[] msg, 										// Message we send
               fn, 										// Filename as an array of bytes
               md; 										// Mode as an array of bytes
 
       int len;        									// Length of the message
+     
+      //Get filename as bytes
+      fn = fileName.getBytes();
+      
+      //Get mode as bytes
+      md = this.transferMode.getBytes();
+      
+      //Initialize packet data byte array
+      msg = new byte[fn.length+md.length+4];
       
       //Set request type (RRQ = 1 or WRQ = 2)
       msg[0] = 0;
       msg[1] = rqType;
-      
-      //Get filename as bytes
-      fn = fileName.getBytes();
       
       //Copy filename into message
       System.arraycopy(fn,0,msg,2,fn.length); 
 
       //Add 0 byte
       msg[fn.length+2] = 0;
-      
-      //Get mode as bytes
-      md = this.transferMode.getBytes();
-    		  
+       
       //Add mode bytes to message
       System.arraycopy(md,0,msg,fn.length+3,md.length);
       
