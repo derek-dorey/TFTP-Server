@@ -5,6 +5,8 @@ package com.sysc.tftp.client;
  
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
+
 import com.sysc.tftp.utils.Variables;
 
 import sun.security.util.Debug;
@@ -142,7 +144,8 @@ public class Client {
 	   int currentBlock = 0;				//Current block of data being received
 	   int currentBlockFromPacket = 0;		//Current block # from the packet
 	   DatagramPacket receivePacket;		//Incoming datagram packet
-	   byte[] data = new byte[Variables.MAX_PACKET_SIZE];			//Byte array for packet data
+	   byte[] packetData = new byte[Variables.MAX_PACKET_SIZE];			//Byte array for packet data
+	   byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - DATA_PACKET_HEADER_SIZE];  //Size of data in data packet
 	   
 	   //Start of Try/Catch
        try {
@@ -156,11 +159,13 @@ public class Client {
     		   
     	   }
     	   
+    	   System.out.println(filePath);
+    	   
     	   //Open new FileOutputStream to place file
     	   incoming = new FileOutputStream(filePath);	   
     	 
     	   //Initialize receivePacket
-    	   receivePacket = new DatagramPacket(data, data.length);
+    	   receivePacket = new DatagramPacket(packetData, packetData.length);
     	   
     	   //While we have more packets to receive, loop
     	   do {
@@ -175,13 +180,16 @@ public class Client {
     		   try {
     			   
     			   //Check if data packet
-    			   if (data[0] == 0 && data[1] == 3) {
+    			   if (packetData[0] == 0 && packetData[1] == 3) {
     				 
     				   //Extract block # from incoming packet
-    				   int blockNumber = ((data[2] << 8) & 0xFF00) & (data[3] & 0xFF);
+    				   int blockNumber = ((packetData[2] << 8) & 0xFF00) & (packetData[3] & 0xFF);
     						   
+    				   //Grab file data from data packet
+    				   fileData = Arrays.copyOfRange(receivePacket.getData(), DATA_PACKET_HEADER_SIZE, receivePacket.getLength());
+    				   
 	  	    		   //Write packet data to the file
-		    		   incoming.write(receivePacket.getData());
+		    		   incoming.write(fileData);
 		    		   
 		    		   //Wait for data to be written to file before doing anything else
 		    		   incoming.getFD().sync();
@@ -338,6 +346,9 @@ public class Client {
 		 
 			do {
 				
+				//Increment block number
+				blockNumber ++;
+				
 				//Initialize receivePacket
 				receivePacket = new DatagramPacket(ackData, ackData.length);	   
 				
@@ -443,7 +454,7 @@ public class Client {
    
    public static void main(String args[]) {
       Client c = new Client();
-      c.sendFile("test.txt");
+      c.receiveFile("test.txt");
    }
    
    
