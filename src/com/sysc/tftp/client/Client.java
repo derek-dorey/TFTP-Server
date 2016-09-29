@@ -76,7 +76,7 @@ public class Client {
     * Receive a file from the server based on the supplied
     * filename.
     */
-   private void receiveFile(String fileName) {
+   public void receiveFile(String fileName) {
 	   byte[] requestMsg;			//Message containing request being sent to the server
        int sendPort;				//Port we are sending the packet to
        int tid;						//Random transfer ID generated 
