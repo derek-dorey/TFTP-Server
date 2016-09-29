@@ -26,4 +26,6 @@ public class Variables {
 	public static int NORMAL_PORT = 69;
 	public static int TEST_PORT = 23;
 	
+	public static String SERVER_FILES_DIR = "src/serverFiles/";
+	
 }

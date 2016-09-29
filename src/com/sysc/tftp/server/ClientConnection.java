@@ -139,13 +139,13 @@ public class ClientConnection implements Runnable {
 
 	public byte[] packageRead(String filename) throws IOException {
 		// TODO
-		Path path = Paths.get("src/files/" + filename);
+		Path path = Paths.get(Variables.SERVER_FILES_DIR + filename);
 		byte[] data = Files.readAllBytes(path);
 		return data;
 	}
 
 	public void writeToFile(String filename, byte[] fileContent) {
-		Path path = Paths.get("src/files/" + filename);
+		Path path = Paths.get(Variables.SERVER_FILES_DIR + filename);
 		try {
 			Files.write(path, fileContent);
 		} catch (IOException e) {
