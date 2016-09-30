@@ -154,7 +154,7 @@ public class ClientConnection implements Runnable {
 			if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
 				fileBytes = null;
 				break;
-			} else if (req == Request.WRQ && received.length < Variables.MAX_PACKET_SIZE) {
+			} else if (req == Request.WRQ && receivePacket.getLength() < Variables.MAX_PACKET_SIZE) {
 				break;
 			}
 		}
@@ -239,7 +239,8 @@ public class ClientConnection implements Runnable {
 		if (data.length <= Variables.DATA.length) { // no data in message
 			return false;
 		}
-		for (int i = 0; i < Variables.DATA.length; i++) {
+		// TODO temp 
+		for (int i = 0; i < Variables.DATA.length - 2; i++) {
 			if (Variables.DATA[i] != data[i]) {
 				return false;
 			}
