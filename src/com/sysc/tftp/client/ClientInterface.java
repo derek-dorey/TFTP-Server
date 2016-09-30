@@ -3,13 +3,20 @@ package com.sysc.tftp.client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+
+import com.sysc.tftp.utils.Variables;
 
 public class ClientInterface {
 
 	public static void main(String[] args) {
+		if (Arrays.asList(args).contains(Variables.TEST_MODE_FLAG)) {
+			Variables.CLIENT_MODE = Variables.Mode.TEST;
+		}
+
 		Client c = new Client();
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		
+
 		while (true) {
 			System.out.println();
 			System.out.println("[ SYSC 3303 TFTP Client ]");
@@ -19,7 +26,7 @@ public class ClientInterface {
 			System.out.println("(3) Exit");
 			System.out.println();
 			System.out.print("Enter selection: ");
-			
+
 			int choice = -1;
 			try {
 				choice = Integer.parseInt(br.readLine());
@@ -28,15 +35,15 @@ public class ClientInterface {
 				continue;
 			}
 			System.out.println();
-			
+
 			if (choice <= 0 || choice >= 4) {
 				System.out.println("\nInvalid input.\n");
-				continue;				
+				continue;
 			} else if (choice == 3) {
 				System.out.println("Exiting...");
 				break;
 			}
-			
+
 			String file = null;
 			try {
 				System.out.println("Enter file: ");
@@ -47,12 +54,12 @@ public class ClientInterface {
 				System.out.println("\nInvalid input.\n");
 				continue;
 			}
-			
+
 			if (file == null || "".equals(file)) {
 				System.out.println("\nInvalid input.\n");
 				continue;
 			}
-			
+
 			if (choice == 1) {
 				c.receiveFile(file);
 			} else if (choice == 2) {

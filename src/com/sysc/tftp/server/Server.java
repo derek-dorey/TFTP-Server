@@ -5,23 +5,25 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
 public class Server implements Runnable {
 
-	// UDP datagram packets and sockets used to send / receive
+	// UDP datagram packet and socket used to receive
 	private DatagramPacket receivePacket;
 	private DatagramSocket receiveSocket;
 
-	private Thread thread = null;
-	private Thread toExit = null;
+	private Thread thread = null; // the thread the listener sits on
+	private Thread toExit = null; // thread that closes all threads on shutdown
 
 	private boolean running = true;
-	
-	private List<Thread> threads = new ArrayList<Thread>();
+
+	private List<Thread> threads = new ArrayList<Thread>(); // list of threads
 
 	public Server() {
 		try {
@@ -35,18 +37,19 @@ public class Server implements Runnable {
 		}
 	}
 
+	/**
+	 * Waits for client to connect and dispatches thread to handle client
+	 * request
+	 */
 	@Override
 	public void run() {
 		try {
 			while (running) {
-				long threadId = Thread.currentThread().getId(); // for printing,
-																// to show which
-																// thread is
-																// doing what
 				byte[] data = new byte[Variables.MAX_PACKET_SIZE];
 				receivePacket = new DatagramPacket(data, data.length);
 
-				System.out.println("[" + threadId + "]: " + "Server: Waiting for packet.");
+				Logger.log("Server: Waiting for packet.");
+
 				// Block until a datagram packet is received from receiveSocket.
 				try {
 					receiveSocket.receive(receivePacket);
@@ -59,27 +62,23 @@ public class Server implements Runnable {
 				}
 
 				// Process the received datagram.
-				System.out.println("[" + threadId + "]: " + "Server: Packet received:");
-				System.out.println("[" + threadId + "]: " + "From host: " + receivePacket.getAddress());
-				System.out.println("[" + threadId + "]: " + "Host port: " + receivePacket.getPort());
-				int len = receivePacket.getLength();
-				System.out.println("[" + threadId + "]: " + "Length: " + len);
-				System.out.println("[" + threadId + "]: " + "Containing: ");
-				for (int j = 0; j < len; j++) {
-					System.out.println("byte " + j + " " + data[j]);
-				}
+				Logger.logPacketReceived(receivePacket);
 
-				Thread t = new Thread(
-						new ClientConnection(data, len, receivePacket.getAddress(), receivePacket.getPort()));
+				Thread t = new Thread(new ClientConnection(receivePacket.getData(), receivePacket.getLength(),
+						receivePacket.getAddress(), receivePacket.getPort()));
 				threads.add(t);
 				t.start();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("Exiting...");
+		Logger.log("Exiting...");
 	}
 
+	/**
+	 * Starts the server thread listening for connections and starts another
+	 * thread to wait for console input to shutdown the server
+	 */
 	public void start() {
 		if (thread == null) {
 			thread = new Thread(this);
@@ -105,23 +104,30 @@ public class Server implements Runnable {
 		}
 	}
 
+	/**
+	 * Waits for all client threads to finish before closing them
+	 */
 	public void closeThreads() {
-		System.out.println("Closing connections...");
+		Logger.log("Closing connections...");
 		thread.interrupt();
 		running = false;
 		for (int i = 0; i < threads.size(); i++) {
 			try {
 				threads.get(i).join();
 			} catch (InterruptedException e) {
-				System.out.println("Failed to join thread");
+				Logger.log("Failed to join thread");
 				e.printStackTrace();
 			}
 		}
-		System.out.println("Connections closed.");
+		Logger.log("Connections closed.");
 		receiveSocket.close();
 	}
 
 	public static void main(String args[]) throws Exception {
+		if (Arrays.asList(args).contains(Variables.VERBOSE_FLAG)) {
+			Variables.VERBOSE = true;
+		}
+
 		Server s = new Server();
 		s.start();
 	}

@@ -10,17 +10,20 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Arrays;
 
+import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 import com.sysc.tftp.utils.Variables.Request;
 
 public class ClientConnection implements Runnable {
 
+	// UDP datagram packets and socket used to send / receive
 	private DatagramPacket receivePacket = null, sendPacket = null;
 	private DatagramSocket sendReceiveSocket = null;
 
-	private byte[] data = null;
-	private byte[] fileBytes = null;
+	private byte[] data = null; // holds the original request
+	private byte[] fileBytes = null; // hold bytes of file to transfer
 
+	// client information: port, IP, length of data
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
 
@@ -31,11 +34,11 @@ public class ClientConnection implements Runnable {
 		this.clientPort = port;
 	}
 
+	/**
+	 * Handles request
+	 */
 	@Override
 	public void run() {
-		long threadId = Thread.currentThread().getId(); // for printing, to
-														// show which thread
-														// is doing what
 		byte[] response = null;
 		String filename = null;
 
@@ -72,15 +75,7 @@ public class ClientConnection implements Runnable {
 
 		sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
 
-		System.out.println("[" + threadId + "]: " + "Server: Sending packet:");
-		System.out.println("[" + threadId + "]: " + "To host: " + sendPacket.getAddress());
-		System.out.println("[" + threadId + "]: " + "Destination host port: " + sendPacket.getPort());
-		int length = sendPacket.getLength();
-		System.out.println("[" + threadId + "]: " + "Length: " + length);
-		System.out.println("[" + threadId + "]: " + "Containing: ");
-		for (int j = 0; j < length; j++) {
-			System.out.println("byte " + j + " " + response[j]);
-		}
+		Logger.logPacketSending(sendPacket);
 
 		try {
 			sendReceiveSocket = new DatagramSocket();
@@ -93,25 +88,24 @@ public class ClientConnection implements Runnable {
 			System.exit(1);
 		}
 
-		System.out
-				.println("[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
-		System.out.println();
+		Logger.log("Server: packet sent using port " + sendReceiveSocket.getLocalPort());
+		Logger.log("");
 
 		if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
 			fileBytes = null;
 			// We're finished with this socket, so close it.
-			System.out.println("[" + threadId + "]: " + "Closing socket...");
+			Logger.log("Closing socket...");
 			sendReceiveSocket.close();
-			System.out.println("[" + threadId + "]: " + "Thread done.");
+			Logger.log("Thread done.");
 			return;
 		}
-		
+
 		while (true) {
-			
+
 			byte[] received = new byte[Variables.MAX_PACKET_SIZE];
 			receivePacket = new DatagramPacket(received, received.length);
 
-			System.out.println("[" + threadId + "]: " + "Server: Waiting for packet.");
+			Logger.log("Server: Waiting for packet.");
 			try {
 				// Block until a datagram is received via sendReceiveSocket.
 				sendReceiveSocket.receive(receivePacket);
@@ -121,15 +115,7 @@ public class ClientConnection implements Runnable {
 			}
 
 			// Process the received datagram.
-			System.out.println("[" + threadId + "]: " + "Server: Packet received:");
-			System.out.println("[" + threadId + "]: " + "From host: " + receivePacket.getAddress());
-			System.out.println("[" + threadId + "]: " + "Host port: " + receivePacket.getPort());
-			int len = receivePacket.getLength();
-			System.out.println("[" + threadId + "]: " + "Length: " + len);
-			System.out.println("[" + threadId + "]: " + "Containing: ");
-			for (int j = 0; j < len; j++) {
-				System.out.println("byte " + j + " " + received[j]);
-			}
+			Logger.logPacketReceived(receivePacket);
 
 			if (req == Request.RRQ) {
 				if (verifyACK(received)) {
@@ -151,17 +137,9 @@ public class ClientConnection implements Runnable {
 					break;
 				}
 			}
-			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
 
-			System.out.println("[" + threadId + "]: " + "Server: Sending packet:");
-			System.out.println("[" + threadId + "]: " + "To host: " + sendPacket.getAddress());
-			System.out.println("[" + threadId + "]: " + "Destination host port: " + sendPacket.getPort());
-			length = sendPacket.getLength();
-			System.out.println("[" + threadId + "]: " + "Length: " + length);
-			System.out.println("[" + threadId + "]: " + "Containing: ");
-			for (int j = 0; j < length; j++) {
-				System.out.println("byte " + j + " " + response[j]);
-			}
+			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
+			Logger.logPacketSending(sendPacket);
 
 			try {
 				sendReceiveSocket.send(sendPacket);
@@ -170,9 +148,8 @@ public class ClientConnection implements Runnable {
 				System.exit(1);
 			}
 
-			System.out.println(
-					"[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
-			System.out.println();
+			Logger.log("Server: packet sent using port " + sendReceiveSocket.getLocalPort());
+			Logger.log("");
 
 			if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
 				fileBytes = null;
@@ -183,22 +160,25 @@ public class ClientConnection implements Runnable {
 		}
 
 		// We're finished with this socket, so close it.
-		System.out.println("[" + threadId + "]: " + "Closing socket...");
+		Logger.log("Closing socket...");
 		sendReceiveSocket.close();
-		System.out.println("[" + threadId + "]: " + "Thread done.");
+		Logger.log("Thread done.");
 	}
 
+	/**
+	 * Packages file to be read
+	 * 
+	 * @return Part, if not all, of file
+	 */
 	public byte[] packageRead() {
 		byte[] finalPackage = null;
 		if (fileBytes.length > Variables.MAX_PACKET_SIZE - Variables.DATA.length) {
-			// TODO
 			finalPackage = new byte[Variables.MAX_PACKET_SIZE];
 			System.arraycopy(Variables.DATA, 0, finalPackage, 0, Variables.DATA.length);
 			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length,
 					Variables.MAX_PACKET_SIZE - Variables.DATA.length);
-			fileBytes = Arrays.copyOfRange(fileBytes, Variables.MAX_PACKET_SIZE - Variables.DATA.length, fileBytes.length);
-			System.out.println(fileBytes.length);
-			
+			fileBytes = Arrays.copyOfRange(fileBytes, Variables.MAX_PACKET_SIZE - Variables.DATA.length,
+					fileBytes.length);
 		} else {
 			finalPackage = new byte[Variables.DATA.length + fileBytes.length];
 			System.arraycopy(Variables.DATA, 0, finalPackage, 0, Variables.DATA.length);
@@ -207,6 +187,14 @@ public class ClientConnection implements Runnable {
 		return finalPackage;
 	}
 
+	/**
+	 * Writes to specified file, if file doesn't exist create new file
+	 * 
+	 * @param filename
+	 *            File to find/create and write to
+	 * @param fileContent
+	 *            Content to put in file
+	 */
 	public void writeToFile(String filename, byte[] fileContent) {
 		try {
 			File f = new File(filename);
@@ -223,6 +211,13 @@ public class ClientConnection implements Runnable {
 		}
 	}
 
+	/**
+	 * Verifies that the first 4 bytes are ACK
+	 * 
+	 * @param data
+	 *            Message received
+	 * @return if proper ACK message
+	 */
 	public boolean verifyACK(byte[] data) {
 		// TODO temp -2 minus, will fix later
 		for (int i = 0; i < Variables.ACK.length - 2; i++) {
@@ -233,6 +228,13 @@ public class ClientConnection implements Runnable {
 		return true;
 	}
 
+	/**
+	 * Verifies that the first 4 bytes are DATA
+	 * 
+	 * @param data
+	 *            Message received
+	 * @return if proper DATA message
+	 */
 	public boolean verifyDATA(byte[] data) {
 		if (data.length <= Variables.DATA.length) { // no data in message
 			return false;
@@ -245,6 +247,13 @@ public class ClientConnection implements Runnable {
 		return true;
 	}
 
+	/**
+	 * Verifies that the request is valid
+	 * 
+	 * @param data
+	 *            Request sent
+	 * @return Enum of type of request
+	 */
 	public Request verifyRequest(byte[] data) {
 		Request req; // READ, WRITE or ERROR
 		int j = 0, k = 0;
@@ -296,6 +305,13 @@ public class ClientConnection implements Runnable {
 		return req;
 	}
 
+	/**
+	 * Returns the name of the file
+	 * 
+	 * @param data
+	 *            Contains filename
+	 * @return filename
+	 */
 	public String pullFilename(byte[] data) {
 		int j;
 		for (j = 2; j < len; j++) {
