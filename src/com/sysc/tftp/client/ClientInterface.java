@@ -13,6 +13,9 @@ public class ClientInterface {
 		if (Arrays.asList(args).contains(Variables.TEST_MODE_FLAG)) {
 			Variables.CLIENT_MODE = Variables.Mode.TEST;
 		}
+		if (Arrays.asList(args).contains(Variables.VERBOSE_FLAG)) {
+			Variables.VERBOSE = true;
+		}
 
 		Client c = new Client();
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
