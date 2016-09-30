@@ -1,5 +1,7 @@
 package com.sysc.tftp.server;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -17,7 +19,7 @@ public class ClientConnection implements Runnable {
 
 	private DatagramPacket receivePacket = null, sendPacket = null;
 	private DatagramSocket sendReceiveSocket = null;
-	
+
 	private byte[] data = null;
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
@@ -42,9 +44,9 @@ public class ClientConnection implements Runnable {
 			// TODO
 			// issue (iteration 2)
 		}
-		
+
 		filename = pullFilename(data);
-		
+
 		// Create a response.
 		if (req == Request.RRQ) {
 			response = Variables.DATA;
@@ -75,9 +77,10 @@ public class ClientConnection implements Runnable {
 			System.exit(1);
 		}
 
-		System.out.println("[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
+		System.out
+				.println("[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
 		System.out.println();
-		
+
 		while (true) {
 			byte[] received = new byte[Variables.MAX_PACKET_SIZE];
 			receivePacket = new DatagramPacket(received, received.length);
@@ -89,6 +92,17 @@ public class ClientConnection implements Runnable {
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(1);
+			}
+
+			// Process the received datagram.
+			System.out.println("[" + threadId + "]: " + "Server: Packet received:");
+			System.out.println("[" + threadId + "]: " + "From host: " + receivePacket.getAddress());
+			System.out.println("[" + threadId + "]: " + "Host port: " + receivePacket.getPort());
+			int len = receivePacket.getLength();
+			System.out.println("[" + threadId + "]: " + "Length: " + len);
+			System.out.println("[" + threadId + "]: " + "Containing: ");
+			for (int j = 0; j < len; j++) {
+				System.out.println("byte " + j + " " + received[j]);
 			}
 			
 			if (req == Request.RRQ) {
@@ -102,7 +116,7 @@ public class ClientConnection implements Runnable {
 				}
 			} else if (req == Request.WRQ) {
 				if (verifyDATA(received)) {
-					writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+					writeToFile(Variables.SERVER_FILES_DIR + filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
 					sendPacket = new DatagramPacket(Variables.ACK, Variables.ACK.length, clientIP, clientPort);
 				} else {
 					// TODO
@@ -110,7 +124,7 @@ public class ClientConnection implements Runnable {
 					break;
 				}
 			}
-			
+
 			System.out.println("[" + threadId + "]: " + "Server: Sending packet:");
 			System.out.println("[" + threadId + "]: " + "To host: " + sendPacket.getAddress());
 			System.out.println("[" + threadId + "]: " + "Destination host port: " + sendPacket.getPort());
@@ -128,11 +142,12 @@ public class ClientConnection implements Runnable {
 				System.exit(1);
 			}
 
-			System.out.println("[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
+			System.out.println(
+					"[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
 			System.out.println();
-			
+
 		}
-		
+
 		// We're finished with this socket, so close it.
 		sendReceiveSocket.close();
 	}
@@ -145,12 +160,17 @@ public class ClientConnection implements Runnable {
 	}
 
 	public void writeToFile(String filename, byte[] fileContent) {
-		Path path = Paths.get(Variables.SERVER_FILES_DIR + filename);
 		try {
-			Files.write(path, fileContent);
-		} catch (IOException e) {
+			File f = new File(filename);
+			if(!f.exists())
+			    f.createNewFile();
+			FileOutputStream fos = new FileOutputStream(f, true); 
+			fos.getFD().sync();
+			fos.write(fileContent);
+			fos.close();
+		} catch (Exception e) {
 			e.printStackTrace();
-			System.exit(1);
+			return;
 		}
 	}
 
@@ -162,7 +182,7 @@ public class ClientConnection implements Runnable {
 		}
 		return true;
 	}
-	
+
 	public boolean verifyDATA(byte[] data) {
 		if (data.length <= Variables.DATA.length) { // no data in message
 			return false;
@@ -174,11 +194,11 @@ public class ClientConnection implements Runnable {
 		}
 		return true;
 	}
-	
+
 	public Request verifyRequest(byte[] data) {
 		Request req; // READ, WRITE or ERROR
 		int j = 0, k = 0;
-		
+
 		if (data[0] != 0) {
 			return Request.ERROR; // bad
 		} else if (data[1] == 1) {
@@ -188,7 +208,7 @@ public class ClientConnection implements Runnable {
 		} else {
 			return Request.ERROR; // bad
 		}
-		
+
 		if (req != Request.ERROR) { // check for filename
 			// search for next all 0 byte
 			for (j = 2; j < len; j++) {
@@ -222,7 +242,7 @@ public class ClientConnection implements Runnable {
 		if (k != len - 1) {
 			return Request.ERROR; // other stuff at end of packet
 		}
-		
+
 		return req;
 	}
 
@@ -234,5 +254,5 @@ public class ClientConnection implements Runnable {
 		}
 		return new String(data, 2, j - 2);
 	}
-	
+
 }

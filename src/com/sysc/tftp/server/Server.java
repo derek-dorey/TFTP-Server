@@ -65,6 +65,9 @@ public class Server implements Runnable {
 				int len = receivePacket.getLength();
 				System.out.println("[" + threadId + "]: " + "Length: " + len);
 				System.out.println("[" + threadId + "]: " + "Containing: ");
+				for (int j = 0; j < len; j++) {
+					System.out.println("byte " + j + " " + data[j]);
+				}
 
 				Thread t = new Thread(
 						new ClientConnection(data, len, receivePacket.getAddress(), receivePacket.getPort()));
