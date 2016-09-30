@@ -1,15 +1,13 @@
 package com.sysc.tftp.server;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 import com.sysc.tftp.utils.Variables;
@@ -21,6 +19,8 @@ public class ClientConnection implements Runnable {
 	private DatagramSocket sendReceiveSocket = null;
 
 	private byte[] data = null;
+	private byte[] fileBytes = null;
+
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
 
@@ -45,11 +45,27 @@ public class ClientConnection implements Runnable {
 			// issue (iteration 2)
 		}
 
-		filename = pullFilename(data);
+		filename = Variables.SERVER_FILES_DIR + pullFilename(data);
 
 		// Create a response.
 		if (req == Request.RRQ) {
-			response = Variables.DATA;
+			if (fileBytes == null) {
+				File f = new File(filename);
+				if (!f.exists() || f.isDirectory()) {
+					// TODO
+					// issue, file does not exist
+					// iteration 2
+				}
+				fileBytes = new byte[(int) f.length()];
+				try {
+					FileInputStream fis = new FileInputStream(filename);
+					fis.read(fileBytes);
+					fis.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			response = packageRead();
 		} else if (req == Request.WRQ) {
 			response = Variables.ACK;
 		}
@@ -81,7 +97,17 @@ public class ClientConnection implements Runnable {
 				.println("[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
 		System.out.println();
 
+		if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
+			fileBytes = null;
+			// We're finished with this socket, so close it.
+			System.out.println("[" + threadId + "]: " + "Closing socket...");
+			sendReceiveSocket.close();
+			System.out.println("[" + threadId + "]: " + "Thread done.");
+			return;
+		}
+		
 		while (true) {
+			
 			byte[] received = new byte[Variables.MAX_PACKET_SIZE];
 			receivePacket = new DatagramPacket(received, received.length);
 
@@ -104,26 +130,28 @@ public class ClientConnection implements Runnable {
 			for (int j = 0; j < len; j++) {
 				System.out.println("byte " + j + " " + received[j]);
 			}
-			
+
 			if (req == Request.RRQ) {
 				if (verifyACK(received)) {
-					// TODO
-					break;
+					response = packageRead();
 				} else {
 					// TODO
 					// issue, request is not correct
+					// iteration 2
 					break;
 				}
 			} else if (req == Request.WRQ) {
 				if (verifyDATA(received)) {
-					writeToFile(Variables.SERVER_FILES_DIR + filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
-					sendPacket = new DatagramPacket(Variables.ACK, Variables.ACK.length, clientIP, clientPort);
+					writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+					response = Variables.ACK;
 				} else {
 					// TODO
 					// issue, request is not correct
+					// iteration 2
 					break;
 				}
 			}
+			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
 
 			System.out.println("[" + threadId + "]: " + "Server: Sending packet:");
 			System.out.println("[" + threadId + "]: " + "To host: " + sendPacket.getAddress());
@@ -146,25 +174,46 @@ public class ClientConnection implements Runnable {
 					"[" + threadId + "]: " + "Server: packet sent using port " + sendReceiveSocket.getLocalPort());
 			System.out.println();
 
+			if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
+				fileBytes = null;
+				break;
+			} else if (req == Request.WRQ && received.length < Variables.MAX_PACKET_SIZE) {
+				break;
+			}
 		}
 
 		// We're finished with this socket, so close it.
+		System.out.println("[" + threadId + "]: " + "Closing socket...");
 		sendReceiveSocket.close();
+		System.out.println("[" + threadId + "]: " + "Thread done.");
 	}
 
-	public byte[] packageRead(String filename) throws IOException {
-		// TODO
-		Path path = Paths.get(Variables.SERVER_FILES_DIR + filename);
-		byte[] data = Files.readAllBytes(path);
-		return data;
+	public byte[] packageRead() {
+		byte[] finalPackage = null;
+		if (fileBytes.length > Variables.MAX_PACKET_SIZE - Variables.DATA.length) {
+			// TODO
+			finalPackage = new byte[Variables.MAX_PACKET_SIZE];
+			System.arraycopy(Variables.DATA, 0, finalPackage, 0, Variables.DATA.length);
+			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length,
+					Variables.MAX_PACKET_SIZE - Variables.DATA.length);
+			fileBytes = Arrays.copyOfRange(fileBytes, Variables.MAX_PACKET_SIZE - Variables.DATA.length, fileBytes.length);
+			System.out.println(fileBytes.length);
+			
+		} else {
+			finalPackage = new byte[Variables.DATA.length + fileBytes.length];
+			System.arraycopy(Variables.DATA, 0, finalPackage, 0, Variables.DATA.length);
+			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length, fileBytes.length);
+		}
+		return finalPackage;
 	}
 
 	public void writeToFile(String filename, byte[] fileContent) {
 		try {
 			File f = new File(filename);
-			if(!f.exists())
-			    f.createNewFile();
-			FileOutputStream fos = new FileOutputStream(f, true); 
+			if (!f.exists()) {
+				f.createNewFile();
+			}
+			FileOutputStream fos = new FileOutputStream(f, true);
 			fos.getFD().sync();
 			fos.write(fileContent);
 			fos.close();
@@ -175,7 +224,8 @@ public class ClientConnection implements Runnable {
 	}
 
 	public boolean verifyACK(byte[] data) {
-		for (int i = 0; i < Variables.ACK.length; i++) {
+		// TODO temp -2 minus, will fix later
+		for (int i = 0; i < Variables.ACK.length - 2; i++) {
 			if (Variables.ACK[i] != data[i]) {
 				return false;
 			}

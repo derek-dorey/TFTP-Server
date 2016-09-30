@@ -2,9 +2,9 @@ package com.sysc.tftp.utils;
 
 public class Variables {
 
-	public static final int MAX_PACKET_SIZE = 516; // Maximum packet size in
+	public static final int MAX_PACKET_SIZE = 512; // Maximum packet size in
 													// bytes
-
+	
 	public static enum Mode {
 		NORMAL, TEST
 	}; // Normal mode sends directly to the server, test mode sends to simulator
