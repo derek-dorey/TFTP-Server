@@ -22,7 +22,8 @@ public class ClientConnection implements Runnable {
 
 	private byte[] data = null; // holds the original request
 	private byte[] fileBytes = null; // hold bytes of file to transfer
-
+	private int blockNumber = 0; // current block of data being received/sent
+	
 	// client information: port, IP, length of data
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
@@ -219,8 +220,10 @@ public class ClientConnection implements Runnable {
 	 * @return if proper ACK message
 	 */
 	public boolean verifyACK(byte[] data) {
-		// TODO temp -2 minus, will fix later
-		for (int i = 0; i < Variables.ACK.length - 2; i++) {
+		blockNumber++;
+		Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
+		Variables.ACK[3] = (byte) blockNumber;
+		for (int i = 0; i < Variables.ACK.length; i++) {
 			if (Variables.ACK[i] != data[i]) {
 				return false;
 			}
@@ -239,8 +242,10 @@ public class ClientConnection implements Runnable {
 		if (data.length <= Variables.DATA.length) { // no data in message
 			return false;
 		}
-		// TODO temp 
-		for (int i = 0; i < Variables.DATA.length - 2; i++) {
+		blockNumber++;
+		Variables.DATA[2] = (byte) ((byte) blockNumber >> 8);
+		Variables.DATA[3] = (byte) blockNumber;
+		for (int i = 0; i < Variables.DATA.length; i++) {
 			if (Variables.DATA[i] != data[i]) {
 				return false;
 			}
