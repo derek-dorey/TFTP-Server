@@ -205,6 +205,7 @@ public class Client {
 
 					// Output error and return
 					System.out.println("Could not save the full file! An error occured");
+					incoming.close();
 					return;
 
 				}

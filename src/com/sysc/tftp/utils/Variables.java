@@ -24,6 +24,8 @@ public class Variables {
 
 	// port numbers
 	public static int SERVER_PORT = 69;
+	public static int ERROR_PORT = 23;
+	
 	public static int NORMAL_PORT = 69;
 	public static int TEST_PORT = 23;
 
