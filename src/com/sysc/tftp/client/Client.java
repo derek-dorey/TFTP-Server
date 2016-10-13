@@ -28,7 +28,7 @@ public class Client {
               md;   // Mode as an array of bytes
 
       int len;     	// Length of the message
-    
+      
       //Get filename as bytes
       fn = fileName.getBytes();
      
@@ -350,6 +350,7 @@ public class Client {
 
 				// If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER
 				// IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
+				
 				if (ackData[0] == 0 && ackData[1] == 4) {
 
 					Logger.log("Received ACK response");
@@ -385,7 +386,9 @@ public class Client {
 					// Write packet outgoing to log
 					Logger.logPacketSending(sendPacket);
 
-				} else {
+				} else if(ackData[0] == 0 && ackData[1] == 5) {  //error packet received
+					
+					System.out.println("File already exists.");
 
 					// Invalid response received
 				}
