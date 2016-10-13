@@ -57,22 +57,26 @@ public class ClientConnection implements Runnable {
 		// Create a response.
 		if (req == Request.RRQ) {
 			if (fileBytes == null) {
-				//File f = new File(filename);
-				if (!f.exists() || f.isDirectory()) {
-					// TODO
-					// issue, file does not exist
-					// iteration 2
-				}
-				fileBytes = new byte[(int) f.length()];
-				try {
-					FileInputStream fis = new FileInputStream(filename);
-					fis.read(fileBytes);
-					fis.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				
+					fileBytes = new byte[(int) f.length()];
+					
+					//Attempt to open the file.... if doesNotExist... create error response in catch block
+					try {
+						FileInputStream fis = new FileInputStream(filename);
+						fis.read(fileBytes);
+						fis.close();
+						} catch (Exception e) {
+							errorDetected=true;
+							response = packageError(Variables.ERROR_1);
+							e.printStackTrace();
+						}
+					
+					if(!errorDetected){
+						response = packageRead();
+					}
+				
 			}
-			response = packageRead();
+			
 		} else if (req == Request.WRQ) {
 			
 			if(f.exists() && !f.isDirectory()) {    //client requesting to write a file that already exists

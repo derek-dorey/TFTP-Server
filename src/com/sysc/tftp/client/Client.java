@@ -151,10 +151,7 @@ public class Client {
 
 			}
 
-			System.out.println(filePath);
-
-			// Open new FileOutputStream to place file
-			incoming = new FileOutputStream(filePath);
+			
 
 			// Initialize receivePacket
 			receivePacket = new DatagramPacket(packetData, packetData.length);
@@ -176,6 +173,11 @@ public class Client {
 
 					// Check if data packet
 					if (packetData[0] == 0 && packetData[1] == 3) {
+						
+						System.out.println(filePath);
+
+						// Open new FileOutputStream to place file
+						incoming = new FileOutputStream(filePath);
 
 						// Extract block # from incoming packet
 						int blockNumber = ((packetData[2] << 8) & 0xFF00) & (packetData[3] & 0xFF);
@@ -193,10 +195,13 @@ public class Client {
 
 						// Send ACK for received block back to server
 						sendACK(currentBlock, receivePacket.getPort());
+						
+						incoming.close();
 
-					} else {
+					} else if (packetData[0] == 0 && packetData[1] == 5) {	//If an error code is received from server
 
 						// Invalid op code
+						System.out.println("ERRORRRRRRRR");
 
 					}
 
@@ -205,7 +210,7 @@ public class Client {
 
 					// Output error and return
 					System.out.println("Could not save the full file! An error occured");
-					incoming.close();
+				//	incoming.close();
 					return;
 
 				}
@@ -213,7 +218,7 @@ public class Client {
 			} while (!lastBlock(receivePacket));
 
 			// Close FileOutputStream
-			incoming.close();
+		//	incoming.close();
 
 			// End of Try/Catch
 		} catch (IOException e) {
@@ -388,7 +393,7 @@ public class Client {
 
 				} else if(ackData[0] == 0 && ackData[1] == 5) {  //error packet received
 					
-					System.out.println("File already exists.");
+					System.out.println("ERROR!!!!!!!!!!");
 
 					// Invalid response received
 				}
