@@ -182,10 +182,13 @@ public class Client {
 					// Check if data packet
 					if (packetData[0] == 0 && packetData[1] == 3) {
 						
-						System.out.println(filePath);
-
+						//System.out.println(filePath);
+						
+						//Reload the file
+						f = new File(filePath);
+						
 						// Open new FileOutputStream to place file
-						incoming = new FileOutputStream(filePath);
+						incoming = new FileOutputStream(f, true);
 
 						// Extract block # from incoming packet
 						int blockNumber = ((packetData[2] << 8) & 0xFF00) & (packetData[3] & 0xFF);
@@ -209,8 +212,14 @@ public class Client {
 					} else if (packetData[0] == 0 && packetData[1] == 5) {	//If an error code is received from server
 
 						// Invalid op code
-						System.out.println("ERRORRRRRRRR");
+	
+						fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+								receivePacket.getLength());
+						
+						String errorMsg = new String(fileData, "UTF-8");
+						System.out.println(errorMsg);
 
+			
 					}
 
 					// Sync failed, we could not save the bytes
@@ -402,6 +411,18 @@ public class Client {
 				} else if(ackData[0] == 0 && ackData[1] == 5) {  //error packet received
 					
 					System.out.println("ERROR!!!!!!!!!!");
+					
+					bytesRead = outgoing.read();
+
+					// Make new byte array to exact length
+					dataSection = new byte[bytesRead];
+					
+					bytesRead = outgoing.read();
+					
+					System.arraycopy(incomingData, 0, dataSection, 0, bytesRead);
+					
+					String errorMsg = new String(dataSection, "UTF-8");
+					System.out.println(errorMsg);
 
 					// Invalid response received
 				}

@@ -4,10 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.SyncFailedException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.file.AccessDeniedException;
 import java.util.Arrays;
 
 import com.sysc.tftp.utils.Logger;
@@ -70,7 +72,6 @@ public class ClientConnection implements Runnable {
 				} catch (Exception e) {
 					errorDetected = true;
 					response = packageError(Variables.ERROR_1);
-					e.printStackTrace();
 				}
 
 				if (!errorDetected) {
@@ -155,8 +156,7 @@ public class ClientConnection implements Runnable {
 				}
 			} else if (req == Request.WRQ) {
 				if (verifyDATA(received)) {
-					writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
-					response = Variables.ACK;
+					response = writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
 				} else {
 					// TODO
 					// issue, request is not correct
@@ -222,20 +222,38 @@ public class ClientConnection implements Runnable {
 	 * @param fileContent
 	 *            Content to put in file
 	 */
-	public void writeToFile(String filename, byte[] fileContent) {
+	public byte[] writeToFile(String filename, byte[] fileContent) {
 		try {
 			File f = new File(filename);
-			if (!f.exists()) {
-				f.createNewFile();
-			}
+			f.createNewFile();			// CreateNewFile() throws Exception automatically if file already exists
+			
+			if (!f.canWrite()){ 
+				throw new AccessDeniedException("Access denied!");
+			}	
+			
 			FileOutputStream fos = new FileOutputStream(f, true);
-			fos.getFD().sync();
-			fos.write(fileContent);
+			
+			try{ 					// test if disk is full
+				fos.getFD().sync();
+				fos.write(fileContent);
+			} catch (SyncFailedException e) { 		//Disk is full error
+				f.delete();
+				fos.close();
+				errorDetected = true;
+				return packageError(Variables.ERROR_3);
+			}
 			fos.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
+		} catch (AccessDeniedException e){
+			
+			errorDetected = true;
+			return packageError(Variables.ERROR_2);
+			
+		} catch (IOException e) {
+			
+			errorDetected = true;
+			return packageError(Variables.ERROR_6);
 		}
+			return Variables.ACK;
 	}
 
 	/**
