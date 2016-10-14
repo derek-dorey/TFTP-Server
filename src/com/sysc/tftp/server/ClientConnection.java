@@ -264,6 +264,7 @@ public class ClientConnection implements Runnable {
 	 * @return if proper ACK message
 	 */
 	public boolean verifyACK(byte[] data) {
+		
 		blockNumber++;
 		Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
 		Variables.ACK[3] = (byte) blockNumber;
