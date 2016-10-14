@@ -155,11 +155,10 @@ public class Client {
 
 				// File already exists
 				System.out.println("The file already exists on the client, we will not overwrite it.");
+				
 				return;
 
 			}
-
-			
 
 			// Initialize receivePacket
 			receivePacket = new DatagramPacket(packetData, packetData.length);
@@ -330,13 +329,14 @@ public class Client {
    private void sendFileData(String filePath) {
 		File f = new File(filePath); 	// File object for seeing if it already exists
 		FileInputStream outgoing; 		// FileOutputStream for outgoing data
-		byte[] ackData = new byte[Variables.ACK_DATA_SIZE]; // Byte array for ack packet data
+		byte[] incomingPacket = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for ack packet data
 		byte[] data = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for file data being sent
-		byte[] incomingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];// Max size of the data in the packet
+		byte[] outgoingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];	// Max size of the data in the packet
+		byte[] incomingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];	// Max size of the data in the packet		
 		byte[] dataSection;// Size of the data in the packet
 		int blockNumber = 0; // Current block number being sent
 		int bytesRead = 0; // Number of bytes read
-
+		
 		// Check if file already exists
 		if (!f.exists() || f.isDirectory()) {
 
@@ -360,7 +360,7 @@ public class Client {
 				blockNumber++;
 
 				// Initialize receivePacket
-				receivePacket = new DatagramPacket(ackData, ackData.length);
+				receivePacket = new DatagramPacket(incomingPacket, incomingPacket.length);
 
 				Logger.log("Client: Waiting for packet.");
 
@@ -373,18 +373,18 @@ public class Client {
 				// If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER
 				// IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
 				
-				if (ackData[0] == 0 && ackData[1] == 4) {
+				if (incomingPacket[0] == 0 && incomingPacket[1] == 4) {
 
 					Logger.log("Received ACK response");
 
 					// Read the next set of bytes
-					bytesRead = outgoing.read(incomingData);
+					bytesRead = outgoing.read(outgoingData);
 
 					// Make new byte array to exact length
 					dataSection = new byte[bytesRead];
 
 					// Copy incoming data to dataSection byte array
-					System.arraycopy(incomingData, 0, dataSection, 0, bytesRead);
+					System.arraycopy(outgoingData, 0, dataSection, 0, bytesRead);
 
 					// Initialize packet to correct size
 					data = new byte[bytesRead + Variables.DATA_PACKET_HEADER_SIZE];
@@ -394,6 +394,7 @@ public class Client {
 					data[1] = 3;
 					data[2] = (byte) ((byte) blockNumber >> 8);
 					data[3] = (byte) blockNumber;
+					
 
 					// Copy file data into packet
 					System.arraycopy(dataSection, 0, data, 4, dataSection.length);
@@ -408,23 +409,19 @@ public class Client {
 					// Write packet outgoing to log
 					Logger.logPacketSending(sendPacket);
 
-				} else if(ackData[0] == 0 && ackData[1] == 5) {  //error packet received
+				} else if(incomingPacket[0] == 0 && incomingPacket[1] == 5) {  //error packet received
 					
-					System.out.println("ERROR!!!!!!!!!!");
+					//Get the message from the error packet
+					incomingData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+							receivePacket.getLength());
 					
-					bytesRead = outgoing.read();
-
-					// Make new byte array to exact length
-					dataSection = new byte[bytesRead];
+					//Convert byte array to UTF8 string
+					String errorMsg = new String(incomingData, "UTF-8");
 					
-					bytesRead = outgoing.read();
-					
-					System.arraycopy(incomingData, 0, dataSection, 0, bytesRead);
-					
-					String errorMsg = new String(dataSection, "UTF-8");
+					//Print error msg
 					System.out.println(errorMsg);
-
-					// Invalid response received
+					
+					
 				}
 
 			} while (bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE);
