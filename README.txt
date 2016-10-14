@@ -1,63 +1,97 @@
 ====================================================================================================
 ====================================================================================================
 
-README File for Project - Iteration 0 and 1 - TFTP 
+README File for Project - Iteration 2 - TFTP 
 
-	Names and Student Number:
-	Lexi Brown
 	Derek Dore
-	Adebola Shittu   100918348
-	Scott  Hanton
-	Lee  Fisher
+	Lee Fisher
+	Lexi Brown
+	Scott Hanton
 	
 ====================================================================================================
 ====================================================================================================
-
 
 USING THE TFTP 
 ======================
 OVERVIEW
 =========
-This is a tftp client/server that is being used to transfer file from the client to the server. 
-It also displays information about the transfer process. The client is setup on Port 69 in the 
-Normal run and Port 23 otherwise, it either perform a read request or write request 
-The transfer process starts with a request to send or receive file and when this request is granted, 
-a file of block length of 512 bytes is sent, each data packet is first acknowledge 
-by an acknowledgement packet before the next packet is sent.
+	This is a tftp client/server that is being used to transfer file from the client to the server. 
+	It also displays information about the transfer process. The client is setup on Port 69 in the 
+	Normal run and Port 23 otherwise, it either perform a read request or write request 
+	The transfer process starts with a request to send or receive file and when this request is granted, 
+	a file of block length of 512 bytes is sent, each data packet is first acknowledge 
+	by an acknowledgement packet before the next packet is sent.
 
+====================================================================================================
+====================================================================================================
+
+RESPONSIBILITIES
+================
+
+Richard Hanton
+- Created the timing diagrams for error codes 1, 2, 3, and 6. 
+- Created the UML diagram for the state of our project at iteration 2.
+- Helped team members fix some small issues within client and server.
+
+Derek Dore
+
+
+Lee  Fisher
+
+
+Lexi Brown
+- Updating readme
+
+====================================================================================================
+====================================================================================================
 
 RUNNING THE PROGRAM
 =====================
    
-1. Copy all the files in the same directory
+	Method 1:
+		1. Copy all the files in the same directory
 
-2. Using command prompt:
+		2. Using command prompt:
 
-    Setting Up the Compiler
+		    Setting Up the Compiler
 
-      A.Copying the address of java jdk compiler
-	   * My computer --> Local disk --> Program files --> Java --> jdk --> bin < copy location from properties >
-	
-      B.Copy and paste compiler address to the computer
-	   * My computer -- >  properties --> advance system settings --> System properties --> Environment variables
- 			 -- > Create New user variable --> Variable Name: path --> Paste the location copied from Step A
-	
-   
-    * start menu --->  command prompt(cmd)
+		      A.Copying the address of java jdk compiler
+			   * My computer --> Local disk --> Program files --> Java --> jdk --> bin < copy location from properties >
+			
+		      B.Copy and paste compiler address to the computer
+			   * My computer -- >  properties --> advance system settings --> System properties --> Environment variables
+		 			 -- > Create New user variable --> Variable Name: path --> Paste the location copied from Step A
+		
+		3.
+		    * start menu --->  command prompt(cmd)
 
-	* C:\Users\User-name>javac  press ENTER
-	* C:\Users\User-name>cd\                                (Go to the beginning of your hard drive)
-	* C:\dir                                                (print out all the directory in your c drive)
-	* C:\>cd <directory of the file(filename)>              (open the directory of your file where the project is saved)
-	* C:\filename>javac server.java				
-	* C:\filename>javac Client.java
-	* C:\filename>javac ClientInterface.java
-	* C:\filename>javac ClientConnection.java
+			* C:\Users\User-name>javac  press ENTER
+			* C:\Users\User-name>cd\                                (Go to the beginning of your hard drive)
+			* C:\dir                                                (print out all the directory in your c drive)
+			* C:\>cd <directory of the file(filename)>              (open the directory of your file where the project is saved)
+			* C:\filename>javac *.java
+			* C:\filename>java Server
+			* C:\filename>java ClientInterface
+			* C:\filename>java ErrorSimulator
 
+	Method 2:
 
-3. Create New project using Eclipse or bluej. Create class for the client, server, clientInterface, ClientConnection.
-   Build the program and compile it.
-       
+		1. Import project using Eclipse.
+		2. Build the program and compile it.
+
+RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
+===========================================
+	To run the client in test mode use "-t" as an argument.
+	To run the server, client or error simulator in verbose mode use "--v" as an argument.
+
+	In Command Prompt:
+		java ClientInterface --v -t
+
+	In Eclipse:
+		- Click on Run -> Run Configurations...
+		- Open "Java Application" in the left list and click on the application you want to run
+		- Click on the "Arguments" tab
+		- Put any arguments in the first field called "Program Arguments" i.e, --v -t
 
 DISPLAY ON TERMINAL
 =====================
@@ -65,47 +99,15 @@ DISPLAY ON TERMINAL
 	
 	Client:
 	~$ cd <path-to-client-directory>
-	~$ ./client <IP address of server> <port number>
+	~$ java ClientInterface [--v] [-t]
 
 	Server:
 	~$ cd <path-to-server-directory>
-	~$ ./server <port number>
+	~$ java Server [--v]
 	
-
-
-TERMINATION
-============
-*A data packet size of 0 byte is sent to mark the end of a transfer. The data packet is 
-first acknowledge by the ACK packets like all other data packets.
-
-*If some errors occur due to an invalid request then instead of sending an error 
-packet and corrupting the program, a stack trace is printed.
-
-
-LIMITATIONS
-============
-* This program is limited to reading and writing files from/to a remote server. 
-
-*It passes 8 bit byte of data.
-
-*Not programmed to deal with when "File is not found" or when "the disk is full".
-
-*Can not overwrite file if it already exist.
-
-ASSUMPTIONS
-============
-* No Packets are duplicated in transit.
-
-* No Pakets will be delayed or lost in transit.
-
-* No TFTP error packet is prepared, transmitted, received or handled.
-
-FEATURES
-========
-* Writes File to a directory but doesnt over ride file if the already exists.
-
-* Perform a read request or write request base on the user input.
-
+	ErrorSimulator:
+	~$ cd <path-to-error-directory>
+	~$ java ErrorSimulator [--v]
 
 IMPLEMENTATION DETAILS
 ======================
@@ -123,7 +125,7 @@ IMPLEMENTATION DETAILS
 
 2. ClientInterface.java implements the client side of the TFTP as follows: 
 	* Create a Client class
-	* Print operatin information to the terminal
+	* Print operation information to the terminal
 	* Convert the buffer readline to integer and print it to the terminal
 	* Send File based on the integer value of the buffer reader.
 
@@ -144,3 +146,36 @@ IMPLEMENTATION DETAILS
 	* Package file to be read, write to specified file and create new file if file doesnt exist.
 	* Verify that the first 4 bytes are ACK and hat the request is valid.
 	* Return the name of the file.
+
+5. ErrorSimulator.java
+	* Create a datagram socket and binds it to port 23 
+	* Starts listening on the socket
+	* Wait for client to connect and creates thread to handle it.
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+TERMINATION
+============
+* A data packet size less than 512 byte is sent to mark the end of a transfer.
+
+* If some errors occur due to an invalid request then instead of sending an error 
+packet and corrupting the program, a stack trace is printed.
+
+LIMITATIONS
+============
+* This program is limited to reading and writing files from/to a remote server. 
+
+* It passes 8 bit byte of data.
+
+ASSUMPTIONS
+============
+* No Packets are duplicated in transit.
+
+* No Pakets will be delayed or lost in transit.
+
+FEATURES
+========
+* Writes File to a directory and doesn't override file if the already exists.
+
+* Perform a read request or write request base on the user input.
