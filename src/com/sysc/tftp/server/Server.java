@@ -108,6 +108,7 @@ public class Server implements Runnable {
 	 * Waits for all client threads to finish before closing them
 	 */
 	public void closeThreads() {
+		
 		Logger.log("Closing connections...");
 		thread.interrupt();
 		running = false;
