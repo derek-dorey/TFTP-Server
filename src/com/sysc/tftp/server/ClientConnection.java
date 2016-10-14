@@ -23,12 +23,13 @@ public class ClientConnection implements Runnable {
 	private byte[] data = null; // holds the original request
 	private byte[] fileBytes = null; // hold bytes of file to transfer
 	private int blockNumber = 0; // current block of data being received/sent
-	
+
 	// client information: port, IP, length of data
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
-	
-	private boolean errorDetected = false;  //flag set when error detected, signals closing thread
+
+	private boolean errorDetected = false; // flag set when error detected,
+											// signals closing thread
 
 	public ClientConnection(byte[] data, int len, InetAddress ip, int port) {
 		this.data = data;
@@ -57,36 +58,35 @@ public class ClientConnection implements Runnable {
 		// Create a response.
 		if (req == Request.RRQ) {
 			if (fileBytes == null) {
-				
-					fileBytes = new byte[(int) f.length()];
-					
-					//Attempt to open the file.... if doesNotExist... create error response in catch block
-					try {
-						FileInputStream fis = new FileInputStream(filename);
-						fis.read(fileBytes);
-						fis.close();
-						} catch (Exception e) {
-							errorDetected=true;
-							response = packageError(Variables.ERROR_1);
-							e.printStackTrace();
-						}
-					
-					if(!errorDetected){
-						response = packageRead();
-					}
-				
+
+				fileBytes = new byte[(int) f.length()];
+
+				// Attempt to open the file.... if doesNotExist... create error
+				// response in catch block
+				try {
+					FileInputStream fis = new FileInputStream(filename);
+					fis.read(fileBytes);
+					fis.close();
+				} catch (Exception e) {
+					errorDetected = true;
+					response = packageError(Variables.ERROR_1);
+					e.printStackTrace();
+				}
+
+				if (!errorDetected) {
+					response = packageRead();
+				}
 			}
-			
 		} else if (req == Request.WRQ) {
-			
-			if(f.exists() && !f.isDirectory()) {    //client requesting to write a file that already exists
-				
-				response = packageError(Variables.ERROR_6);  //form the error message response
+
+			// client requesting to write a file that already exists
+			if (f.exists() && !f.isDirectory()) { 
+				// form the error message response
+				response = packageError(Variables.ERROR_6);
 				errorDetected = true;
-			}
-			
-			else {
-				response = Variables.ACK;  //valid write request: format ACK response
+			} else {
+				// valid write request: format ACK response
+				response = Variables.ACK;
 			}
 		}
 
@@ -107,12 +107,11 @@ public class ClientConnection implements Runnable {
 
 		Logger.log("Server: packet sent using port " + sendReceiveSocket.getLocalPort());
 		Logger.log("");
-		
-		if(errorDetected) {  //close sendReceiveSocket after sending error datagram
-			Logger.log("Error detected, closing thread.");  
+
+		// close sendReceiveSocket after sending error datagram
+		if (errorDetected) {
+			Logger.log("Error detected, closing thread.");
 			sendReceiveSocket.close();
-			
-			
 		}
 
 		if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
@@ -125,15 +124,14 @@ public class ClientConnection implements Runnable {
 		}
 
 		while (true) {
-			
-			if(errorDetected) { //if an error packet was sent, break and terminate thread
-				break;				
+			// if an error packet was sent, break and terminate thread
+			if (errorDetected) {
+				break;
 			}
-
 
 			byte[] received = new byte[Variables.MAX_PACKET_SIZE];
 			receivePacket = new DatagramPacket(received, received.length);
-		
+
 			Logger.log("Server: Waiting for packet.");
 			try {
 				// Block until a datagram is received via sendReceiveSocket.
@@ -354,40 +352,40 @@ public class ClientConnection implements Runnable {
 		}
 		return new String(data, 2, j - 2);
 	}
-	
-	public byte[] packageError(byte[] error) {  //formulate the error packet: [05|ErrorCode|ErrMsg|0]  (all in bytes)
-		
+
+	// formulate the error packet: [05|ErrorCode|ErrMsg|0] (all in bytes)
+	public byte[] packageError(byte[] error) {
+
 		String errorMessage = new String();
 		byte[] errorBytes;
-		byte[] zeroByte = {(byte)0};
-		
-		if(error == Variables.ERROR_1) {
+		byte[] zeroByte = { (byte) 0 };
+
+		if (error == Variables.ERROR_1) {
 			errorMessage = "File not found.";
 		}
-		
-		else if(error == Variables.ERROR_2) {
+
+		else if (error == Variables.ERROR_2) {
 			errorMessage = "Access Violation.";
 		}
-		
+
 		else if (error == Variables.ERROR_3) {
 			errorMessage = "Disk Full.";
 		}
-		
+
 		else if (error == Variables.ERROR_6) {
 			errorMessage = "File already exists.";
 		}
-		
+
 		errorBytes = errorMessage.getBytes();
-		
+
 		byte[] errorPacket = new byte[error.length + errorBytes.length + zeroByte.length];
-		
-		System.arraycopy(error, 0, errorPacket, 0, 4);	
+
+		System.arraycopy(error, 0, errorPacket, 0, 4);
 		errorBytes = errorMessage.getBytes();
 		System.arraycopy(errorBytes, 0, errorPacket, error.length, errorBytes.length);
-		System.arraycopy(zeroByte, 0, errorPacket, (error.length+errorBytes.length), zeroByte.length);
+		System.arraycopy(zeroByte, 0, errorPacket, (error.length + errorBytes.length), zeroByte.length);
 		return errorPacket;
-		
+
 	}
-	
 
 }

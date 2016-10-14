@@ -72,7 +72,15 @@ public class Client {
 		int tid; 			// Random transfer ID generated
 		Variables.Mode run = Variables.CLIENT_MODE; 
 		DatagramPacket sendPacket; // A packet to send request to server
+		
+		String filePath = (Variables.CLIENT_FILES_DIR + fileName); //combine directory and filename to locate file		
+		File f = new File(filePath); //create file object using the filePath above
 
+		if (f.exists() && !f.isDirectory()) { 
+			System.out.println("File already exists.");  //if the file already exists in the client directory, do not send RRQ and re-prompt user input
+			return;										 //Note: do not send error code 6, rather terminate the request
+		}
+		
 		// Start of Try/Catch
 		try {
 

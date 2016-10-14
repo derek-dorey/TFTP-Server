@@ -21,16 +21,16 @@ public class Variables {
 	public static final byte[] WRITE = { 0, 4, 0, 0 };
 	public static final byte[] DATA = { 0, 3, 0, 1 };
 	public static final byte[] ACK = { 0, 4, 0, 0 };
-	
-	public static final byte[] ERROR_1 = {0,5,0,1}; 	//file not found
-	public static final byte[] ERROR_2 = {0,5,0,2}; 	//access violation
-	public static final byte[] ERROR_3 = {0,5,0,3}; 	//disk full
-	public static final byte[] ERROR_6 = {0,5,0,6};		//file already exists
-	
+
+	public static final byte[] ERROR_1 = { 0, 5, 0, 1 }; // file not found
+	public static final byte[] ERROR_2 = { 0, 5, 0, 2 }; // access violation
+	public static final byte[] ERROR_3 = { 0, 5, 0, 3 }; // disk full
+	public static final byte[] ERROR_6 = { 0, 5, 0, 6 }; // file already exists
+
 	// port numbers
 	public static int SERVER_PORT = 69;
 	public static int ERROR_PORT = 23;
-	
+
 	public static int NORMAL_PORT = 69;
 	public static int TEST_PORT = 23;
 
