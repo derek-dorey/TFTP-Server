@@ -6,6 +6,7 @@ public class Variables {
 													// bytes
 
 	public static enum Mode {
+		
 		NORMAL, TEST
 	}; // Normal mode sends directly to the server, test mode sends to simulator
 
@@ -26,7 +27,7 @@ public class Variables {
 	public static final byte[] ERROR_2 = { 0, 5, 0, 2 }; // access violation
 	public static final byte[] ERROR_3 = { 0, 5, 0, 3 }; // disk full
 	public static final byte[] ERROR_6 = { 0, 5, 0, 6 }; // file already exists
-
+	
 	// port numbers
 	public static int SERVER_PORT = 69;
 	public static int ERROR_PORT = 23;
@@ -46,7 +47,7 @@ public class Variables {
 	// Size of the ack packet
 	public static final int ACK_DATA_SIZE = 4;
 
-	public static boolean VERBOSE = false;
+	public static boolean VERBOSE = true;
 	public static final String VERBOSE_FLAG = "--v";
 
 	public static Mode CLIENT_MODE = Mode.NORMAL;
