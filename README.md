@@ -142,7 +142,7 @@ OTHER FILES
 5. UML.png
 	* The UML (Unified Modeling Language) for each class
 
-6. Error Code *.png
+6. Error Code *.jpeg
 	* All the timing diagrams from errors while reading or writing
 
 TERMINATION
