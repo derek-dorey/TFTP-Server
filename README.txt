@@ -29,18 +29,35 @@ RESPONSIBILITIES
 ================
 
 Richard Hanton
-- Created the timing diagrams for error codes 1, 2, 3, and 6. 
-- Created the UML diagram for the state of our project at iteration 2.
-- Helped team members fix some small issues within client and server.
+	Iteration 1:
+		- Client side
+
+	Iteration 2:
+		- Created the timing diagrams for error codes 1, 2, 3, and 6. 
+		- Created the UML diagram for the state of our project at iteration 2.
+		- Helped team members fix some small issues within client and server.
 
 Derek Dore
+	Iteration 1:
+		- UCMs for client/server scenarios
 
+	Iteration 2:
+		- Server side error handling
 
 Lee  Fisher
+	Iteration 1:
+		- UMLs for all classes
 
+	Iteration 2:
+		- Client side error handling
 
 Lexi Brown
-- Updating readme
+	Iteration 1:
+		- Server side and client interface
+
+	Iteration 2:
+		- Updating readme
+		- Fixing iteration 1 issues
 
 ====================================================================================================
 ====================================================================================================

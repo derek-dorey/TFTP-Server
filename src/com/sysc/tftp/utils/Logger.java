@@ -154,13 +154,15 @@ public class Logger {
 		default:
 			type = "Invalid";
 		}
+		if (data[0] != 0) {
+			type = "Invalid";
+		}
 
 		System.out.println("[" + threadId + "]: " + "Response type: " + type);
 
 		// block number
 		int num = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
 		System.out.println("[" + threadId + "]: " + "Block number: " + num);
-
 	}
 
 	/**
@@ -182,6 +184,9 @@ public class Logger {
 			type = "Write";
 			break;
 		default:
+			type = "Invalid";
+		}
+		if (data[0] != 0) {
 			type = "Invalid";
 		}
 
