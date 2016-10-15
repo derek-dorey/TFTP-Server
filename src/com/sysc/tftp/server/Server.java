@@ -96,6 +96,17 @@ public class Server implements Runnable {
 							scan.close();
 							closeThreads();
 							break;
+						} else {
+							switch (s.toLowerCase().trim()) {
+							case Variables.SET_VERBOSE_ON:
+								Variables.VERBOSE = true;
+								System.out.println("\nVerbose: [ON].\n");
+								break;
+							case Variables.SET_VERBOSE_OFF:
+								Variables.VERBOSE = false;
+								System.out.println("\nVerbose: [OFF].\n");
+								break;
+							}
 						}
 					} while (scan.hasNext());
 				}
@@ -125,10 +136,6 @@ public class Server implements Runnable {
 	}
 
 	public static void main(String args[]) throws Exception {
-		if (Arrays.asList(args).contains(Variables.VERBOSE_FLAG)) {
-			Variables.VERBOSE = true;
-		}
-
 		Server s = new Server();
 		s.start();
 	}

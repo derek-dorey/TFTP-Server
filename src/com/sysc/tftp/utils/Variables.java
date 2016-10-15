@@ -6,8 +6,18 @@ public class Variables {
 													// bytes
 
 	public static enum Mode {
+		NORMAL("NORMAL"), TEST("TEST");
 		
-		NORMAL, TEST
+		String type;
+		
+		Mode(String s) {
+			type = s;
+		}
+		
+		public String getType() {
+			return type;
+		}
+		
 	}; // Normal mode sends directly to the server, test mode sends to simulator
 
 	public static enum Request {
@@ -47,10 +57,17 @@ public class Variables {
 	// Size of the ack packet
 	public static final int ACK_DATA_SIZE = 4;
 
-	public static boolean VERBOSE = true;
+	public static boolean VERBOSE = false;
 	public static final String VERBOSE_FLAG = "--v";
 
 	public static Mode CLIENT_MODE = Mode.NORMAL;
 	public static final String TEST_MODE_FLAG = "-t";
 
+	// settings commands
+	public static final String SET_VERBOSE_ON = "set verbose on";
+	public static final String SET_VERBOSE_OFF = "set verbose off";
+	
+	public static final String SET_MODE_TEST = "set mode test";
+	public static final String SET_MODE_NORMAL = "set mode normal";
+	
 }

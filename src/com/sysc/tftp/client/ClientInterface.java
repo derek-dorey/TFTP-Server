@@ -3,26 +3,21 @@ package com.sysc.tftp.client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 
 import com.sysc.tftp.utils.Variables;
 
 public class ClientInterface {
 
 	public static void main(String[] args) {
-		if (Arrays.asList(args).contains(Variables.TEST_MODE_FLAG)) {
-			Variables.CLIENT_MODE = Variables.Mode.TEST;
-		}
-		if (Arrays.asList(args).contains(Variables.VERBOSE_FLAG)) {
-			Variables.VERBOSE = true;
-		}
-
 		Client c = new Client();
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 		while (true) {
 			System.out.println();
 			System.out.println("[ SYSC 3303 TFTP Client ]");
+			System.out.println();
+			System.out.println("Current mode: [" + Variables.CLIENT_MODE.getType() + "]");
+			System.out.println("Verbose: [" + (Variables.VERBOSE ? "ON" : "OFF") + "]");
 			System.out.println();
 			System.out.println("(1) Read file");
 			System.out.println("(2) Write to file");
@@ -31,10 +26,32 @@ public class ClientInterface {
 			System.out.print("Enter selection: ");
 
 			int choice = -1;
+			String line = null;
 			try {
-				choice = Integer.parseInt(br.readLine());
+				line = br.readLine();
+				choice = Integer.parseInt(line);
 			} catch (Exception e) {
-				System.out.println("\nInvalid input.\n");
+				String settings = line;
+				switch (settings.toLowerCase().trim()) {
+				case Variables.SET_MODE_NORMAL:
+					Variables.CLIENT_MODE = Variables.Mode.NORMAL;
+					System.out.println("\nChanged mode.\n");
+					break;
+				case Variables.SET_MODE_TEST:
+					Variables.CLIENT_MODE = Variables.Mode.TEST;
+					System.out.println("\nChanged mode.\n");
+					break;
+				case Variables.SET_VERBOSE_ON:
+					Variables.VERBOSE = true;
+					System.out.println("\nVerbose settings changed.\n");
+					break;
+				case Variables.SET_VERBOSE_OFF:
+					Variables.VERBOSE = false;
+					System.out.println("\nVerbose settings changed.\n");
+					break;
+				default:
+					System.out.println("\nInvalid input.\n");
+				}
 				continue;
 			}
 			System.out.println();
