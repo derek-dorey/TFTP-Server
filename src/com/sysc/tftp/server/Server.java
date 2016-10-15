@@ -62,7 +62,7 @@ public class Server implements Runnable {
 				}
 
 				// Process the received datagram.
-				Logger.logPacketReceived(receivePacket);
+				Logger.logRequestPacketReceived(receivePacket);
 
 				Thread t = new Thread(new ClientConnection(receivePacket.getData(), receivePacket.getLength(),
 						receivePacket.getAddress(), receivePacket.getPort()));

@@ -47,67 +47,23 @@ Lexi Brown
 
 RUNNING THE PROGRAM
 =====================
-   
-	Method 1:
-		1. Copy all the files in the same directory
 
-		2. Using command prompt:
-
-		    Setting Up the Compiler
-
-		      A.Copying the address of java jdk compiler
-			   * My computer --> Local disk --> Program files --> Java --> jdk --> bin < copy location from properties >
-			
-		      B.Copy and paste compiler address to the computer
-			   * My computer -- >  properties --> advance system settings --> System properties --> Environment variables
-		 			 -- > Create New user variable --> Variable Name: path --> Paste the location copied from Step A
-		
-		3.
-		    * start menu --->  command prompt(cmd)
-
-			* C:\Users\User-name>javac  press ENTER
-			* C:\Users\User-name>cd\                                (Go to the beginning of your hard drive)
-			* C:\dir                                                (print out all the directory in your c drive)
-			* C:\>cd <directory of the file(filename)>              (open the directory of your file where the project is saved)
-			* C:\filename>javac *.java
-			* C:\filename>java Server
-			* C:\filename>java ClientInterface
-			* C:\filename>java ErrorSimulator
-
-	Method 2:
-
-		1. Import project using Eclipse.
-		2. Build the program and compile it.
+	1. Import project into Eclipse.
+	2. Build the program and compile it.
 
 RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
 ===========================================
 	To run the client in test mode use "-t" as an argument.
 	To run the server, client or error simulator in verbose mode use "--v" as an argument.
 
-	In Command Prompt:
-		java ClientInterface --v -t
+	1. Click on Run -> Run Configurations...
+	2. Open "Java Application" in the left list and click on the application you want to run
+	3. Click on the "Arguments" tab
+	4. Put any arguments in the first field called "Program Arguments" i.e, --v -t
+	5. Run program
 
-	In Eclipse:
-		- Click on Run -> Run Configurations...
-		- Open "Java Application" in the left list and click on the application you want to run
-		- Click on the "Arguments" tab
-		- Put any arguments in the first field called "Program Arguments" i.e, --v -t
-
-DISPLAY ON TERMINAL
-=====================
-	~$ cd <path-to-main-directory>
-	
-	Client:
-	~$ cd <path-to-client-directory>
-	~$ java ClientInterface [--v] [-t]
-
-	Server:
-	~$ cd <path-to-server-directory>
-	~$ java Server [--v]
-	
-	ErrorSimulator:
-	~$ cd <path-to-error-directory>
-	~$ java ErrorSimulator [--v]
+	*NOTE*
+		These settings will remain until you change them. And now you don't have to go to run configuration, you can just run the program like usually and those parameters will apply.
 
 IMPLEMENTATION DETAILS
 ======================

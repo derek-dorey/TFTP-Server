@@ -106,7 +106,7 @@ public class Client {
 				sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), sendPort);
 
 				// Write packet outgoing to log
-				Logger.logPacketSending(sendPacket);
+				Logger.logRequestPacketSending(sendPacket);
 
 				// Send the packet to the server
 				sendReceiveSocket.send(sendPacket);
@@ -295,7 +295,7 @@ public class Client {
 				sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), sendPort);
 
 				// Write packet outgoing to log
-				Logger.logPacketSending(sendPacket);
+				Logger.logRequestPacketSending(sendPacket);
 
 				// Send the packet to the server
 				sendReceiveSocket.send(sendPacket);
