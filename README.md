@@ -47,70 +47,32 @@ Lexi Brown
 
 RUNNING THE PROGRAM
 =====================
-   
-	Method 1:
-		1. Copy all the files in the same directory
 
-		2. Using command prompt:
+	Client Side:
+		1. Import project into Eclipse.
+		2. Run the ClientInterface
 
-		    Setting Up the Compiler
-
-		      A.Copying the address of java jdk compiler
-			   * My computer --> Local disk --> Program files --> Java --> jdk --> bin < copy location from properties >
-			
-		      B.Copy and paste compiler address to the computer
-			   * My computer -- >  properties --> advance system settings --> System properties --> Environment variables
-		 			 -- > Create New user variable --> Variable Name: path --> Paste the location copied from Step A
-		
-		3.
-		    * start menu --->  command prompt(cmd)
-
-			* C:\Users\User-name>javac  press ENTER
-			* C:\Users\User-name>cd\                                (Go to the beginning of your hard drive)
-			* C:\dir                                                (print out all the directory in your c drive)
-			* C:\>cd <directory of the file(filename)>              (open the directory of your file where the project is saved)
-			* C:\filename>javac *.java
-			* C:\filename>java Server
-			* C:\filename>java ClientInterface
-			* C:\filename>java ErrorSimulator
-
-	Method 2:
-
-		1. Import project using Eclipse.
-		2. Build the program and compile it.
+	Server Side:
+		1. Import project into Eclipse.
+		2. Run the Server
 
 RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
 ===========================================
-	To run the client in test mode use "-t" as an argument.
-	To run the server, client or error simulator in verbose mode use "--v" as an argument.
 
-	In Command Prompt:
-		java ClientInterface --v -t
-
-	In Eclipse:
-		- Click on Run -> Run Configurations...
-		- Open "Java Application" in the left list and click on the application you want to run
-		- Click on the "Arguments" tab
-		- Put any arguments in the first field called "Program Arguments" i.e, --v -t
-
-DISPLAY ON TERMINAL
-=====================
-	~$ cd <path-to-main-directory>
-	
 	Client:
-	~$ cd <path-to-client-directory>
-	~$ java ClientInterface [--v] [-t]
-
+		While ClientInterface is running you can type in the following commands:
+			* set verbose on
+			* set verbose off
+			* set mode normal
+			* set mode test
 	Server:
-	~$ cd <path-to-server-directory>
-	~$ java Server [--v]
-	
-	ErrorSimulator:
-	~$ cd <path-to-error-directory>
-	~$ java ErrorSimulator [--v]
+		While the server is running you can type in the following commands:
+			* set verbose on
+			* set verbose off
 
 IMPLEMENTATION DETAILS
 ======================
+
 1. Client.java implements the client side of the TFTP as follows:
 
 	* Create a read request or write request base on the request type.
@@ -154,6 +116,34 @@ IMPLEMENTATION DETAILS
 	* Accept datagram packet from the socket and pass the received datagram to the server.
 	* Wait for server to send back response and then pass response to client
 	* Continues to pass data between client and server until file transfer is complete.
+
+OTHER FILES
+===========
+
+1. Logger.java
+	* This is a class that logs all packets coming in and going out
+	* It logs the contents of the packet, it's length, type (i.e, RRQ, WRQ, ACK, etc), block number, mode, etc
+
+2. Variables.java
+	* Holds all the common variables used by the client and sever
+
+3. test.txt
+	* A short file for the client to test writing
+
+4. text.txt
+	* A long file for the client to test writing large files
+
+5. test2.txt
+	* A short file for the client to test reading
+
+4. text.txt
+	* A long file for the client to test reading large files
+
+5. UML.png
+	* The UML (Unified Modeling Language) for each class
+
+6. Error Code *.png
+	* All the timing diagrams from errors while reading or writing
 
 TERMINATION
 ============

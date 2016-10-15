@@ -48,25 +48,31 @@ Lexi Brown
 RUNNING THE PROGRAM
 =====================
 
-	1. Import project into Eclipse.
-	2. Build the program and compile it.
+	Client Side:
+		1. Import project into Eclipse.
+		2. Run the ClientInterface
+
+	Server Side:
+		1. Import project into Eclipse.
+		2. Run the Server
 
 RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
 ===========================================
-	To run the client in test mode use "-t" as an argument.
-	To run the server, client or error simulator in verbose mode use "--v" as an argument.
 
-	1. Click on Run -> Run Configurations...
-	2. Open "Java Application" in the left list and click on the application you want to run
-	3. Click on the "Arguments" tab
-	4. Put any arguments in the first field called "Program Arguments" i.e, --v -t
-	5. Run program
-
-	*NOTE*
-		These settings will remain until you change them. And now you don't have to go to run configuration, you can just run the program like usually and those parameters will apply.
+	Client:
+		While ClientInterface is running you can type in the following commands:
+			* set verbose on
+			* set verbose off
+			* set mode normal
+			* set mode test
+	Server:
+		While the server is running you can type in the following commands:
+			* set verbose on
+			* set verbose off
 
 IMPLEMENTATION DETAILS
 ======================
+
 1. Client.java implements the client side of the TFTP as follows:
 
 	* Create a read request or write request base on the request type.
@@ -110,6 +116,34 @@ IMPLEMENTATION DETAILS
 	* Accept datagram packet from the socket and pass the received datagram to the server.
 	* Wait for server to send back response and then pass response to client
 	* Continues to pass data between client and server until file transfer is complete.
+
+OTHER FILES
+===========
+
+1. Logger.java
+	* This is a class that logs all packets coming in and going out
+	* It logs the contents of the packet, it's length, type (i.e, RRQ, WRQ, ACK, etc), block number, mode, etc
+
+2. Variables.java
+	* Holds all the common variables used by the client and sever
+
+3. test.txt
+	* A short file for the client to test writing
+
+4. text.txt
+	* A long file for the client to test writing large files
+
+5. test2.txt
+	* A short file for the client to test reading
+
+4. text.txt
+	* A long file for the client to test reading large files
+
+5. UML.png
+	* The UML (Unified Modeling Language) for each class
+
+6. Error Code *.png
+	* All the timing diagrams from errors while reading or writing
 
 TERMINATION
 ============
