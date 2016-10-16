@@ -270,7 +270,15 @@ public class Client {
 		int tid; // Random transfer ID generated
 		Variables.Mode run = Variables.CLIENT_MODE;
 		DatagramPacket sendPacket; // A packet to send request to server
+		File f = new File(Variables.CLIENT_FILES_DIR + fileName); 	// File object for seeing if it already exists
 		
+		// Check if file already exists
+		if (!f.exists() || f.isDirectory()) {
+			// File already exists
+			System.out.println("The file you are trying to send does not exist");
+			return;
+		}
+
 		// Start of Try/Catch
 		try {
 
@@ -338,7 +346,6 @@ public class Client {
     * data to the server.
     */
    private void sendFileData(String filePath) {
-		File f = new File(filePath); 	// File object for seeing if it already exists
 		FileInputStream outgoing; 		// FileOutputStream for outgoing data
 		byte[] incomingPacket = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for ack packet data
 		byte[] data = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for file data being sent
@@ -348,14 +355,6 @@ public class Client {
 		int blockNumber = 0; // Current block number being sent
 		int bytesRead = 0; // Number of bytes read
 		boolean lastBlock = false;
-		// Check if file already exists
-		if (!f.exists() || f.isDirectory()) {
-
-			// File already exists
-			System.out.println("The file you are trying to send does not exist");
-			return;
-
-		}
 
 		// Start of Try/Catch
 		try {
