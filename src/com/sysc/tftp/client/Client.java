@@ -1,8 +1,9 @@
 package com.sysc.tftp.client;
 // This class is the client side for a very simple assignment based on TFTP on
+
 // UDP/IP. The client uses one port and sends a read or write request and gets
 // the appropriate response from the server.
- 
+
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
@@ -11,76 +12,82 @@ import com.sysc.tftp.utils.Variables;
 
 public class Client {
 
-   private DatagramPacket sendPacket, receivePacket;   
-   private DatagramSocket sendReceiveSocket; 
+	private DatagramPacket sendPacket, receivePacket;
+	private DatagramSocket sendReceiveSocket;
 
-   public Client() {
-   }
+	public Client() {
+	}
 
-   /**
-    * Create either a new read request or a new write request
-    * which will be sent to the server before a file transfer
-    * takes place.
-    */
-   private byte[] newRequest(byte rqType, String fileName) {
-      byte[] msg,	// Message we send
-              fn,   // Filename as an array of bytes
-              md;   // Mode as an array of bytes
+	/**
+	 * Create either a new read request or a new write request which will be
+	 * sent to the server before a file transfer takes place.
+	 */
+	private byte[] newRequest(byte rqType, String fileName) {
+		byte[] msg, // Message we send
+				fn, // Filename as an array of bytes
+				md; // Mode as an array of bytes
 
-      int len;     	// Length of the message
-      
-      //Get filename as bytes
-      fn = fileName.getBytes();
-     
-      //Get mode as bytes
-      md = Variables.TRANSFER_MODE.getBytes();
-     
-      //Initialize packet data byte array
-      msg = new byte[fn.length+md.length+4];
-     
-      //Set request type (RRQ = 1 or WRQ = 2)
-      msg[0] = 0;
-      msg[1] = rqType;
-     
-      //Copy filename into message
-      System.arraycopy(fn,0,msg,2,fn.length);
+		int len; // Length of the message
 
-      //Add 0 byte
-      msg[fn.length+2] = 0;
-      
-      //Add mode bytes to message
-      System.arraycopy(md,0,msg,fn.length+3,md.length);
-     
-      //Get length of message
-      len = fn.length+md.length+4; // length of the message            
-     
-      //Finish message with another 0 byte
-      msg[len-1] = 0;
-     
-      //Return message request as bytes
-      return msg;
-     
-   }
-  
-   /**
-    * Receive a file from the server based on the supplied
-    * filename.
-    */
-   public void receiveFile(String fileName) {
-		byte[] requestMsg; 	// Message containing request being sent to the server
-		int sendPort; 		// Port we are sending the packet to
-		int tid; 			// Random transfer ID generated
-		Variables.Mode run = Variables.CLIENT_MODE; 
+		// Get filename as bytes
+		fn = fileName.getBytes();
+
+		// Get mode as bytes
+		md = Variables.TRANSFER_MODE.getBytes();
+
+		// Initialize packet data byte array
+		msg = new byte[fn.length + md.length + 4];
+
+		// Set request type (RRQ = 1 or WRQ = 2)
+		msg[0] = 0;
+		msg[1] = rqType;
+
+		// Copy filename into message
+		System.arraycopy(fn, 0, msg, 2, fn.length);
+
+		// Add 0 byte
+		msg[fn.length + 2] = 0;
+
+		// Add mode bytes to message
+		System.arraycopy(md, 0, msg, fn.length + 3, md.length);
+
+		// Get length of message
+		len = fn.length + md.length + 4; // length of the message
+
+		// Finish message with another 0 byte
+		msg[len - 1] = 0;
+
+		// Return message request as bytes
+		return msg;
+	}
+
+	/**
+	 * Receive a file from the server based on the supplied filename.
+	 */
+	public void receiveFile(String fileName) {
+		byte[] requestMsg; // Message containing request being sent to the
+							// server
+		int sendPort; // Port we are sending the packet to
+		int tid; // Random transfer ID generated
+		Variables.Mode run = Variables.CLIENT_MODE;
 		DatagramPacket sendPacket; // A packet to send request to server
-		
-		String filePath = (Variables.CLIENT_FILES_DIR + fileName); //combine directory and filename to locate file		
-		File f = new File(filePath); //create file object using the filePath above
 
-		if (f.exists() && !f.isDirectory()) { 
-			System.out.println("File already exists.");  //if the file already exists in the client directory, do not send RRQ and re-prompt user input
-			return;										 //Note: do not send error code 6, rather terminate the request
+		// combine directory and filename to locate file
+		String filePath = (Variables.CLIENT_FILES_DIR + fileName);
+
+		// create file object using the filePath above
+		File f = new File(filePath);
+
+		if (f.exists() && !f.isDirectory()) {
+			System.out.println("File already exists."); // if the file already
+														// exists in the client
+														// directory, do not
+														// send RRQ and
+														// re-prompt user input
+			return; // Note: do not send error code 6, rather terminate the
+					// request
 		}
-		
+
 		// Start of Try/Catch
 		try {
 
@@ -91,10 +98,11 @@ public class Client {
 			sendReceiveSocket = new DatagramSocket(tid);
 
 			// If normal run mode use port 69, port 23 otherwise
-			if (run == Variables.Mode.NORMAL)
+			if (run == Variables.Mode.NORMAL) {
 				sendPort = Variables.NORMAL_PORT;
-			else
+			} else {
 				sendPort = Variables.TEST_PORT;
+			}
 
 			// Generate byte array to send to server for request type and file
 			requestMsg = newRequest((byte) 1, fileName);
@@ -127,37 +135,41 @@ public class Client {
 
 			// End of Try/Catch
 		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-          
-   }
-  
-   /**
-    * Saves incoming file packets to the specified path.
-    * Also sends an ack back to the server for each packet
-    * received.
-    */
+
+	}
+
+	/**
+	 * Saves incoming file packets to the specified path. Also sends an ack back
+	 * to the server for each packet received.
+	 */
 	private void saveFileData(String filePath) {
-		File f = new File(filePath); 	// File object for seeing if it already exists
-		FileOutputStream incoming; 		// FileOutputStream for incoming data
-		int currentBlock = 0; 			// Current block of data being received
+		File f = new File(filePath); // File object for seeing if it already
+										// exists
+		FileOutputStream incoming; // FileOutputStream for incoming data
+		int currentBlock = 0; // Current block of data being received
 		int currentBlockFromPacket = 0; // Current block # from the packet
-		DatagramPacket receivePacket; 	// Incoming datagram packet
-		byte[] packetData = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for packet data
-		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size of data in data packet
+		DatagramPacket receivePacket; // Incoming datagram packet
+		byte[] packetData = new byte[Variables.MAX_PACKET_SIZE]; // Byte array
+																	// for
+																	// packet
+																	// data
+		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size
+																									// of
+																									// data
+																									// in
+																									// data
+																									// packet
 
 		// Start of Try/Catch
 		try {
 
 			// Check if file already exists
 			if (f.exists() && !f.isDirectory()) {
-
 				// File already exists
 				System.out.println("The file already exists on the client, we will not overwrite it.");
-				
 				return;
-
 			}
 
 			// Initialize receivePacket
@@ -165,7 +177,6 @@ public class Client {
 
 			// While we have more packets to receive, loop
 			do {
-
 				// Increment block counter
 				currentBlock++;
 
@@ -177,15 +188,14 @@ public class Client {
 
 				// Start of Try/Catch
 				try {
-
 					// Check if data packet
 					if (packetData[0] == 0 && packetData[1] == 3) {
-						
-						//System.out.println(filePath);
-						
-						//Reload the file
+
+						// System.out.println(filePath);
+
+						// Reload the file
 						f = new File(filePath);
-						
+
 						// Open new FileOutputStream to place file
 						incoming = new FileOutputStream(f, true);
 
@@ -205,38 +215,31 @@ public class Client {
 
 						// Send ACK for received block back to server
 						sendACK(currentBlock, receivePacket.getPort());
-						
+
 						incoming.close();
 
-					} else if (packetData[0] == 0 && packetData[1] == 5) {	//If an error code is received from server
-
+					} else if (packetData[0] == 0 && packetData[1] == 5) {
+						// If an error code is received from server
 						// Invalid op code
-	
+
 						fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
 								receivePacket.getLength());
-						
+
 						String errorMsg = new String(fileData, "UTF-8");
 						System.out.println(errorMsg);
-
-			
 					}
-
 					// Sync failed, we could not save the bytes
 				} catch (SyncFailedException e) {
-
 					// Output error and return
 					System.out.println("Could not save the full file! An error occured");
-				//	incoming.close();
+					// incoming.close();
 					return;
-
 				}
 
 			} while (!lastBlock(receivePacket));
 
-			
-			
 			// Close FileOutputStream
-		//	incoming.close();
+			// incoming.close();
 
 			// End of Try/Catch
 		} catch (IOException e) {
@@ -244,34 +247,38 @@ public class Client {
 			System.exit(1);
 		}
 	}
-  
-   /**
-    * Checks the length of a datagram packet. If it is less
-    * than 512 bytes it is the last packet for the file.
-    */
-	public boolean lastBlock(DatagramPacket datagramPacket) {
 
-		// If datagram packet length is less than MAX_PACKET_SIZE its the last block
+	/**
+	 * Checks the length of a datagram packet. If it is less than 512 bytes it
+	 * is the last packet for the file.
+	 */
+	public boolean lastBlock(DatagramPacket datagramPacket) {
+		// If datagram packet length is less than MAX_PACKET_SIZE its the last
+		// block
 		if (datagramPacket.getLength() < Variables.MAX_PACKET_SIZE) {
 			return true;
 		} else {
 			return false;
 		}
-		
 	}
-  
-   /**
-    * Send a file to the server based on the supplied
-    * filename.
-    */  
-   public void sendFile(String fileName) {
-		byte[] requestMsg; // Message containing request being sent to the server
+
+	/**
+	 * Send a file to the server based on the supplied filename.
+	 */
+	public void sendFile(String fileName) {
+		byte[] requestMsg; // Message containing request being sent to the
+							// server
 		int sendPort; // Port we are sending the packet to
 		int tid; // Random transfer ID generated
 		Variables.Mode run = Variables.CLIENT_MODE;
 		DatagramPacket sendPacket; // A packet to send request to server
-		File f = new File(Variables.CLIENT_FILES_DIR + fileName); 	// File object for seeing if it already exists
-		
+		File f = new File(Variables.CLIENT_FILES_DIR + fileName); // File object
+																	// for
+																	// seeing if
+																	// it
+																	// already
+																	// exists
+
 		// Check if file already exists
 		if (!f.exists() || f.isDirectory()) {
 			// File already exists
@@ -312,45 +319,37 @@ public class Client {
 
 				// Send the file to the server
 				sendFileData(Variables.CLIENT_FILES_DIR + fileName);
-				
-				
-			
-				
-				
-				
-				
-				
-				
 
 				// End of Try/Catch
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 				System.exit(1);
-
 				// End of Try/Catch
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(1);
 			}
-
 			// End of Try/Catch
 		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-       
-   }
-  
-   /**
-    * Sends outgoing file packets containing the file
-    * data to the server.
-    */
-   private void sendFileData(String filePath) {
-		FileInputStream outgoing; 		// FileOutputStream for outgoing data
-		byte[] incomingPacket = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for ack packet data
-		byte[] data = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for file data being sent
-		byte[] outgoingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];	// Max size of the data in the packet
-		byte[] incomingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];	// Max size of the data in the packet		
+	}
+
+	/**
+	 * Sends outgoing file packets containing the file data to the server.
+	 */
+	private void sendFileData(String filePath) {
+		FileInputStream outgoing; // FileOutputStream for outgoing data
+		
+		// Byte array for ack packet data
+		byte[] incomingPacket = new byte[Variables.MAX_PACKET_SIZE];
+		// Byte array for file data being sent
+		byte[] data = new byte[Variables.MAX_PACKET_SIZE];
+		// Max size of the data in the packet
+		byte[] outgoingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];
+		// Max size of the data in the packet
+		byte[] incomingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];
+
 		byte[] dataSection;// Size of the data in the packet
 		int blockNumber = 0; // Current block number being sent
 		int bytesRead = 0; // Number of bytes read
@@ -364,8 +363,7 @@ public class Client {
 			// Open new FileOutputStream to place file
 			outgoing = new FileInputStream(filePath);
 
-			while(true) { // Breaks if error packet is sent.. or after final ACK is sent
-
+			do { // Breaks if error packet is sent.. or after final ACK is sent
 				// Increment block number
 				blockNumber++;
 
@@ -382,7 +380,7 @@ public class Client {
 
 				// If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER
 				// IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
-				
+
 				if (incomingPacket[0] == 0 && incomingPacket[1] == 4) {
 
 					Logger.log("Received ACK response");
@@ -390,8 +388,15 @@ public class Client {
 					// Read the next set of bytes
 					bytesRead = outgoing.read(outgoingData);
 
-					// Make new byte array to exact length
-					dataSection = new byte[bytesRead];
+					// TODO
+					// this a last minute fix, should be properly handled later
+					if (bytesRead <= 0) {
+						dataSection = new byte[0];
+						bytesRead = 0;
+					} else {
+						// Make new byte array to exact length
+						dataSection = new byte[bytesRead];
+					}
 
 					// Copy incoming data to dataSection byte array
 					System.arraycopy(outgoingData, 0, dataSection, 0, bytesRead);
@@ -404,7 +409,6 @@ public class Client {
 					data[1] = 3;
 					data[2] = (byte) ((byte) blockNumber >> 8);
 					data[3] = (byte) blockNumber;
-					
 
 					// Copy file data into packet
 					System.arraycopy(dataSection, 0, data, 4, dataSection.length);
@@ -419,55 +423,51 @@ public class Client {
 					// Write packet outgoing to log
 					Logger.logPacketSending(sendPacket);
 
-				} else if(incomingPacket[0] == 0 && incomingPacket[1] == 5) {  //error packet received
-					
-					//Get the message from the error packet
+				} else if (incomingPacket[0] == 0 && incomingPacket[1] == 5) { 
+					// error packet received
+					// Get the message from the error packet
 					incomingData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
 							receivePacket.getLength());
-					
-					//Convert byte array to UTF8 string
+
+					// Convert byte array to UTF8 string
 					String errorMsg = new String(incomingData, "UTF-8");
-					
-					//Print error msg
+
+					// Print error msg
 					System.out.println(errorMsg);
-					
-					//Error packet sent.. break
-					break;
-					
-					
-				}
-				
-				// last block is sent... break
-				if(lastBlock==true){
+
+					// Error packet sent.. break
 					break;
 				}
-				
-				if (!(bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE)){
-					lastBlock=true;
-				}
-				
-			}
+				//
+				// // last block is sent... break
+				// if(lastBlock==true){
+				// break;
+				// }
+				//
+				// if (!(bytesRead == Variables.MAX_PACKET_SIZE -
+				// Variables.DATA_PACKET_HEADER_SIZE)){
+				// lastBlock=true;
+				// }
+
+			} while (bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE);
 
 			// Close the FileInputStream
 			outgoing.close();
-
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}     
-          
-   }
-  
-   /**
-    * Send Acknowledgement to server saying we received
-    * the block.
-    */
+		}
+	}
+
+	/**
+	 * Send Acknowledgement to server saying we received the block.
+	 */
 	public void sendACK(int blockNumber, int tidServer) {
-		DatagramPacket sendPacket; // Acknowledgement packet being sent to the server
-		byte[] requestMsg = new byte[4]; // Message containing ack being sent to the server
+		DatagramPacket sendPacket; // Acknowledgement packet being sent to the
+									// server
+		byte[] requestMsg = new byte[4]; // Message containing ack being sent to
+											// the server
 
 		// Start of Try/Catch
 		try {
@@ -487,7 +487,7 @@ public class Client {
 			// Write packet outgoing to log
 			Logger.logPacketSending(sendPacket);
 
-		// End of Try/Catch
+			// End of Try/Catch
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -498,5 +498,5 @@ public class Client {
 			System.exit(1);
 		}
 	}
-  
+
 }

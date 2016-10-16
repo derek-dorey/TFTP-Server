@@ -3,14 +3,11 @@ package com.sysc.tftp.server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilePermission;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.security.AccessControlException;
-import java.security.AccessController;
 import java.util.Arrays;
 
 import com.sysc.tftp.utils.Logger;
@@ -81,7 +78,6 @@ public class ClientConnection implements Runnable {
 				}
 			}
 		} else if (req == Request.WRQ) {
-
 			// client requesting to write a file that already exists
 			if (f.exists() && !f.isDirectory()) {
 				// form the error message response
@@ -237,12 +233,12 @@ public class ClientConnection implements Runnable {
 	 */
 	public byte[] writeToFile(String filename, byte[] fileContent) throws Throwable {
 		// Check write permission for server folder
-		try {
-			AccessController.checkPermission(new FilePermission(filename, "write"));
-		} catch (AccessControlException e1) {
-			errorDetected = true;
-			return packageError(Variables.ERROR_2);
-		}
+//		try {
+//			AccessController.checkPermission(new FilePermission(filename, "write"));
+//		} catch (AccessControlException e1) {
+//			errorDetected = true;
+//			return packageError(Variables.ERROR_2);
+//		}
 
 		// Check if server has enough available space to write
 		try {
