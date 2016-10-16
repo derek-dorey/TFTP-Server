@@ -73,6 +73,10 @@ RUNNING THE PROGRAM
 		1. Import project into Eclipse.
 		2. Run the Server
 
+	Error Simulator:
+		1. Import project into Eclipse.
+		2. Run the ErrorSimulator
+
 RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
 ===========================================
 
@@ -84,6 +88,10 @@ RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
 			* set mode test
 	Server:
 		While the server is running you can type in the following commands:
+			* set verbose on
+			* set verbose off
+	ErrorSimulator:
+		While the ErrorSimulator is running you can type in the following commands:
 			* set verbose on
 			* set verbose off
 
