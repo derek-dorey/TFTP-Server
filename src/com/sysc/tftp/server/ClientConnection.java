@@ -5,12 +5,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
-import java.io.SyncFailedException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.nio.file.AccessDeniedException;
 import java.security.AccessControlException;
 import java.security.AccessController;
 import java.util.Arrays;
@@ -78,13 +76,14 @@ public class ClientConnection implements Runnable {
 				}
 
 				if (!errorDetected) {
+					blockNumber++;
 					response = packageRead();
 				}
 			}
 		} else if (req == Request.WRQ) {
 
 			// client requesting to write a file that already exists
-			if (f.exists() && !f.isDirectory()) { 
+			if (f.exists() && !f.isDirectory()) {
 				// form the error message response
 				response = packageError(Variables.ERROR_6);
 				errorDetected = true;
@@ -160,9 +159,9 @@ public class ClientConnection implements Runnable {
 			} else if (req == Request.WRQ) {
 				if (verifyDATA(received)) {
 					try {
-						response = writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+						response = writeToFile(filename,
+								Arrays.copyOfRange(received, Variables.DATA.length, received.length));
 					} catch (Throwable e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				} else {
@@ -207,16 +206,22 @@ public class ClientConnection implements Runnable {
 	 */
 	public byte[] packageRead() {
 		byte[] finalPackage = null;
+		byte[] dataPackage = new byte[Variables.DATA.length];
+		
+		System.arraycopy(Variables.DATA, 0, dataPackage, 0, 2);
+		dataPackage[2] = (byte) ((byte) blockNumber >> 8);
+		dataPackage[3] = (byte) blockNumber;
+		
 		if (fileBytes.length > Variables.MAX_PACKET_SIZE - Variables.DATA.length) {
 			finalPackage = new byte[Variables.MAX_PACKET_SIZE];
-			System.arraycopy(Variables.DATA, 0, finalPackage, 0, Variables.DATA.length);
+			System.arraycopy(dataPackage, 0, finalPackage, 0, Variables.DATA.length);
 			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length,
 					Variables.MAX_PACKET_SIZE - Variables.DATA.length);
 			fileBytes = Arrays.copyOfRange(fileBytes, Variables.MAX_PACKET_SIZE - Variables.DATA.length,
 					fileBytes.length);
 		} else {
 			finalPackage = new byte[Variables.DATA.length + fileBytes.length];
-			System.arraycopy(Variables.DATA, 0, finalPackage, 0, Variables.DATA.length);
+			System.arraycopy(dataPackage, 0, finalPackage, 0, Variables.DATA.length);
 			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length, fileBytes.length);
 		}
 		return finalPackage;
@@ -231,45 +236,46 @@ public class ClientConnection implements Runnable {
 	 *            Content to put in file
 	 */
 	public byte[] writeToFile(String filename, byte[] fileContent) throws Throwable {
-				
-		
-				//Check write permission for server folder
-				try {
-					AccessController.checkPermission(new FilePermission(filename,"write"));
-				} catch (AccessControlException e1) {
-					
-					errorDetected = true;
-					return packageError(Variables.ERROR_2);
-				}
-				
-				//Check if server has enough available space to write
-				try { 
-					String parentFolder = new File(filename).getParent();
-					
-					if(new File(parentFolder).getUsableSpace() < (long) fileContent.length) { 
-				
-						errorDetected = true;
-						return packageError(Variables.ERROR_3);
-					}
-				} catch (SecurityException e) {
-					
-					errorDetected = true;
-					return packageError(Variables.ERROR_2);
-				}
-			
-		try {		
+		// Check write permission for server folder
+		try {
+			AccessController.checkPermission(new FilePermission(filename, "write"));
+		} catch (AccessControlException e1) {
+			errorDetected = true;
+			return packageError(Variables.ERROR_2);
+		}
+
+		// Check if server has enough available space to write
+		try {
+			String parentFolder = new File(filename).getParent();
+			if (new File(parentFolder).getUsableSpace() < (long) fileContent.length) {
+				errorDetected = true;
+				return packageError(Variables.ERROR_3);
+			}
+		} catch (SecurityException e) {
+			errorDetected = true;
+			return packageError(Variables.ERROR_2);
+		}
+
+		try {
 			File f = new File(filename);
-			f.createNewFile();			// CreateNewFile() throws Exception automatically if file already exists
-			FileOutputStream fos = new FileOutputStream(f,true);
-			fos.write(fileContent);	
+			f.createNewFile(); // CreateNewFile() throws Exception automatically
+								// if file already exists
+			FileOutputStream fos = new FileOutputStream(f, true);
+			fos.write(fileContent);
 			fos.close();
 		} catch (IOException e) {
-			
 			errorDetected = true;
-			return packageError(Variables.ERROR_6);	
+			return packageError(Variables.ERROR_6);
 		}
-			//write successful.. return ACK
-			return Variables.ACK;
+		
+		// write successful.. return ACK
+		byte[] ackPackage = new byte[Variables.ACK.length];	
+		System.arraycopy(Variables.ACK, 0, ackPackage, 0, 2);
+
+		ackPackage[2] = (byte) ((byte) blockNumber >> 8);
+		ackPackage[3] = (byte) blockNumber;
+		
+		return ackPackage;
 	}
 
 	/**
@@ -280,8 +286,6 @@ public class ClientConnection implements Runnable {
 	 * @return if proper ACK message
 	 */
 	public boolean verifyACK(byte[] data) {
-		
-		blockNumber++;
 		Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
 		Variables.ACK[3] = (byte) blockNumber;
 		for (int i = 0; i < Variables.ACK.length; i++) {
@@ -289,6 +293,7 @@ public class ClientConnection implements Runnable {
 				return false;
 			}
 		}
+		blockNumber++;
 		return true;
 	}
 
