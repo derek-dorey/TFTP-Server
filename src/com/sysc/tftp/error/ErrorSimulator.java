@@ -5,7 +5,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
@@ -17,6 +19,11 @@ public class ErrorSimulator implements Runnable {
 	private DatagramSocket receiveSocket;
 
 	private Thread thread = null; // the thread the listener sits ons
+	private Thread toExit = null; // thread that closes all threads on shutdown
+
+	private boolean running = true;
+	
+	private List<Thread> threads = new ArrayList<Thread>(); // list of threads
 
 	public ErrorSimulator() {
 		try {
@@ -32,7 +39,7 @@ public class ErrorSimulator implements Runnable {
 
 	@Override
 	public void run() {
-		for (;;) { // loop forever
+		while (running) { // loop forever
 			// Construct a DatagramPacket for receiving packets
 			// to 512 bytes long (the length of the byte array).
 
@@ -48,9 +55,10 @@ public class ErrorSimulator implements Runnable {
 				System.exit(1);
 			}
 
-			Logger.logPacketReceived(receivePacket);
+			Logger.logRequestPacketReceived(receivePacket);
 			Thread t = new Thread(new HostThread(receivePacket.getData(), receivePacket.getLength(),
 					receivePacket.getAddress(), receivePacket.getPort()));
+			threads.add(t);
 			t.start();
 		}
 
@@ -61,13 +69,57 @@ public class ErrorSimulator implements Runnable {
 			thread = new Thread(this);
 			thread.start();
 		}
+		if (toExit == null) {
+			toExit = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					Scanner scan = new Scanner(System.in);
+					do {
+						System.out.println("Type '!quit' to shutdown error simulator");
+						String s = scan.nextLine();
+						if ("!quit".equals(s)) {
+							scan.close();
+							closeThreads();
+							break;
+						} else {
+							switch (s.toLowerCase().trim()) {
+							case Variables.SET_VERBOSE_ON:
+								Variables.VERBOSE = true;
+								System.out.println("\nVerbose: [ON].\n");
+								break;
+							case Variables.SET_VERBOSE_OFF:
+								Variables.VERBOSE = false;
+								System.out.println("\nVerbose: [OFF].\n");
+								break;
+							}
+						}
+					} while (scan.hasNext());
+				}
+			});
+			toExit.start();
+		}
+	}
+
+	/**
+	 * Waits for all error threads to finish before closing them
+	 */
+	public void closeThreads() {
+		Logger.log("Closing connections...");
+		thread.interrupt();
+		running = false;
+		for (int i = 0; i < threads.size(); i++) {
+			try {
+				threads.get(i).join();
+			} catch (InterruptedException e) {
+				Logger.log("Failed to join thread");
+				e.printStackTrace();
+			}
+		}
+		Logger.log("Connections closed.");
+		receiveSocket.close();
 	}
 
 	public static void main(String args[]) {
-		if (Arrays.asList(args).contains(Variables.VERBOSE_FLAG)) {
-			Variables.VERBOSE = true;
-		}
-
 		ErrorSimulator es = new ErrorSimulator();
 		es.start();
 	}
@@ -91,7 +143,7 @@ public class ErrorSimulator implements Runnable {
 		public void run() {
 			DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
 
-			Logger.logPacketSending(sendPacket);
+			Logger.logRequestPacketSending(sendPacket);
 
 			// Send the datagram packet to the server via the
 			// send/receive
