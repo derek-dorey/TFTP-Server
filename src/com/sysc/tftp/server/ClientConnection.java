@@ -36,6 +36,7 @@ public class ClientConnection implements Runnable {
 		this.len = len;
 		this.clientIP = ip;
 		this.clientPort = port;
+		this.blockNumber = 0;
 	}
 
 	/**
@@ -85,6 +86,8 @@ public class ClientConnection implements Runnable {
 				errorDetected = true;
 			} else {
 				// valid write request: format ACK response
+				Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
+				Variables.ACK[3] = (byte) blockNumber;
 				response = Variables.ACK;
 			}
 		}
