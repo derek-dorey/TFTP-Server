@@ -3,6 +3,7 @@ package com.sysc.tftp.server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilePermission;
 import java.io.IOException;
 import java.io.SyncFailedException;
 import java.net.DatagramPacket;
@@ -10,6 +11,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.file.AccessDeniedException;
+import java.security.AccessControlException;
+import java.security.AccessController;
 import java.util.Arrays;
 
 import com.sysc.tftp.utils.Logger;
@@ -156,7 +159,12 @@ public class ClientConnection implements Runnable {
 				}
 			} else if (req == Request.WRQ) {
 				if (verifyDATA(received)) {
-					response = writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+					try {
+						response = writeToFile(filename, Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+					} catch (Throwable e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				} else {
 					// TODO
 					// issue, request is not correct
@@ -222,37 +230,45 @@ public class ClientConnection implements Runnable {
 	 * @param fileContent
 	 *            Content to put in file
 	 */
-	public byte[] writeToFile(String filename, byte[] fileContent) {
-		try {
+	public byte[] writeToFile(String filename, byte[] fileContent) throws Throwable {
+				
+		
+				//Check write permission for server folder
+				try {
+					AccessController.checkPermission(new FilePermission(filename,"write"));
+				} catch (AccessControlException e1) {
+					
+					errorDetected = true;
+					return packageError(Variables.ERROR_2);
+				}
+				
+				//Check if server has enough available space to write
+				try { 
+					String parentFolder = new File(filename).getParent();
+					
+					if(new File(parentFolder).getUsableSpace() < (long) fileContent.length) { 
+				
+						errorDetected = true;
+						return packageError(Variables.ERROR_3);
+					}
+				} catch (SecurityException e) {
+					
+					errorDetected = true;
+					return packageError(Variables.ERROR_2);
+				}
+			
+		try {		
 			File f = new File(filename);
 			f.createNewFile();			// CreateNewFile() throws Exception automatically if file already exists
-			
-			if (!f.canWrite()){ 
-				throw new AccessDeniedException("Access denied!");
-			}	
-			
-			FileOutputStream fos = new FileOutputStream(f, true);
-			
-			try{ 					// test if disk is full
-				fos.getFD().sync();
-				fos.write(fileContent);
-			} catch (SyncFailedException e) { 		//Disk is full error
-				f.delete();
-				fos.close();
-				errorDetected = true;
-				return packageError(Variables.ERROR_3);
-			}
+			FileOutputStream fos = new FileOutputStream(f,true);
+			fos.write(fileContent);	
 			fos.close();
-		} catch (AccessDeniedException e){
-			
-			errorDetected = true;
-			return packageError(Variables.ERROR_2);
-			
 		} catch (IOException e) {
 			
 			errorDetected = true;
-			return packageError(Variables.ERROR_6);
+			return packageError(Variables.ERROR_6);	
 		}
+			//write successful.. return ACK
 			return Variables.ACK;
 	}
 
