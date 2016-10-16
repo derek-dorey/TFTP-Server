@@ -233,6 +233,8 @@ public class Client {
 
 			} while (!lastBlock(receivePacket));
 
+			
+			
 			// Close FileOutputStream
 		//	incoming.close();
 
@@ -268,7 +270,7 @@ public class Client {
 		int tid; // Random transfer ID generated
 		Variables.Mode run = Variables.CLIENT_MODE;
 		DatagramPacket sendPacket; // A packet to send request to server
-
+		
 		// Start of Try/Catch
 		try {
 
@@ -302,6 +304,15 @@ public class Client {
 
 				// Send the file to the server
 				sendFileData(Variables.CLIENT_FILES_DIR + fileName);
+				
+				
+			
+				
+				
+				
+				
+				
+				
 
 				// End of Try/Catch
 			} catch (UnknownHostException e) {
@@ -336,7 +347,7 @@ public class Client {
 		byte[] dataSection;// Size of the data in the packet
 		int blockNumber = 0; // Current block number being sent
 		int bytesRead = 0; // Number of bytes read
-		
+		boolean lastBlock = false;
 		// Check if file already exists
 		if (!f.exists() || f.isDirectory()) {
 
@@ -354,7 +365,7 @@ public class Client {
 			// Open new FileOutputStream to place file
 			outgoing = new FileInputStream(filePath);
 
-			do {
+			while(true) { // Breaks if error packet is sent.. or after final ACK is sent
 
 				// Increment block number
 				blockNumber++;
@@ -421,10 +432,22 @@ public class Client {
 					//Print error msg
 					System.out.println(errorMsg);
 					
+					//Error packet sent.. break
+					break;
+					
 					
 				}
-
-			} while (bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE);
+				
+				// last block is sent... break
+				if(lastBlock==true){
+					break;
+				}
+				
+				if (!(bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE)){
+					lastBlock=true;
+				}
+				
+			}
 
 			// Close the FileInputStream
 			outgoing.close();
