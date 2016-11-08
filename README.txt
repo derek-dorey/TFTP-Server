@@ -3,7 +3,7 @@
 
 README File for Project - Iteration 2 - TFTP 
 
-	Derek Dore
+	Derek Dorey
 	Lee Fisher
 	Lexi Brown
 	Scott Hanton
