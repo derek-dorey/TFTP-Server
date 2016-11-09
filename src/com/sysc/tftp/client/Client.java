@@ -362,8 +362,9 @@ public class Client {
 
 			// Open new FileOutputStream to place file
 			outgoing = new FileInputStream(filePath);
-
-			do { // Breaks if error packet is sent.. or after final ACK is sent
+			
+			while(true) {
+			//do { // Breaks if error packet is sent.. or after final ACK is sent
 				// Increment block number
 				blockNumber++;
 
@@ -440,17 +441,16 @@ public class Client {
 				}
 				//
 				// // last block is sent... break
-				// if(lastBlock==true){
-				// break;
-				// }
+				if(lastBlock==true){	//in the event we write a small file (<1 block) to a server-side directory without write permissions, we have to listen for one more response from the server (so that the server can attempt to write the file)
+					break;
+				}
 				//
-				// if (!(bytesRead == Variables.MAX_PACKET_SIZE -
-				// Variables.DATA_PACKET_HEADER_SIZE)){
-				// lastBlock=true;
-				// }
-
-			} while (bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE);
-
+				if (!(bytesRead == Variables.MAX_PACKET_SIZE -Variables.DATA_PACKET_HEADER_SIZE)){
+					lastBlock=true;
+				}
+		}
+			//} while (bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE);
+			
 			// Close the FileInputStream
 			outgoing.close();
 		} catch (FileNotFoundException e) {

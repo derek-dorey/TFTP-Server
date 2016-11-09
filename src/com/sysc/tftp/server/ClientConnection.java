@@ -4,11 +4,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.nio.file.StandardOpenOption;
 
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
@@ -235,36 +242,33 @@ public class ClientConnection implements Runnable {
 	 *            Content to put in file
 	 */
 	public byte[] writeToFile(String filename, byte[] fileContent) throws Throwable {
-		// Check write permission for server folder
-//		try {
-//			AccessController.checkPermission(new FilePermission(filename, "write"));
-//		} catch (AccessControlException e1) {
-//			errorDetected = true;
-//			return packageError(Variables.ERROR_2);
-//		}
-
-		// Check if server has enough available space to write
+		
 		try {
 			String parentFolder = new File(filename).getParent();
 			if (new File(parentFolder).getUsableSpace() < (long) fileContent.length) {
 				errorDetected = true;
 				return packageError(Variables.ERROR_3);
 			}
-		} catch (SecurityException e) {
+		} catch (SecurityException e1) {
 			errorDetected = true;
 			return packageError(Variables.ERROR_2);
-		}
-
+		} 
+		
+		
 		try {
-			File f = new File(filename);
-			f.createNewFile(); // CreateNewFile() throws Exception automatically
-								// if file already exists
-			FileOutputStream fos = new FileOutputStream(f, true);
-			fos.write(fileContent);
-			fos.close();
-		} catch (IOException e) {
+			Path p = Paths.get(filename);
+			OutputStream out = Files.newOutputStream(p, StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
+			out.write(fileContent);	
+			out.close();
+		} catch (AccessDeniedException e) {
+			errorDetected = true;
+			return packageError(Variables.ERROR_2);
+		} catch (FileAlreadyExistsException e2) {
 			errorDetected = true;
 			return packageError(Variables.ERROR_6);
+		} catch (IOException e3) {
+			errorDetected = true;
+			return packageError(Variables.ERROR_3);
 		}
 		
 		// write successful.. return ACK
