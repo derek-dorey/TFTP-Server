@@ -51,7 +51,7 @@ public class Variables {
 	//public static String SERVER_FILES_DIR = "C:\\software";    //directory without write permissions (on lab machines) for testing access violations
 	
 	// client files location
-	public static String CLIENT_FILES_DIR = System.getProperty("user.dir") + "/files/";
+	public static String CLIENT_FILES_DIR = System.getProperty("user.dir") + "/clientFiles/";
 
 	public static String TRANSFER_MODE = "octet";
 
