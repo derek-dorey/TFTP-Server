@@ -46,9 +46,9 @@ public class Variables {
 	public static int TEST_PORT = 23;
 
 	// server files location
-	//public static String SERVER_FILES_DIR = System.getProperty("user.dir") + "/serverFiles/";
+	public static String SERVER_FILES_DIR = System.getProperty("user.dir") + "/serverFiles/";
 	
-	public static String SERVER_FILES_DIR = "C:\\software";    //directory without write permissions (on lab machines) for testing access violations
+	//public static String SERVER_FILES_DIR = "C:\\software";    //directory without write permissions (on lab machines) for testing access violations
 	
 	// client files location
 	public static String CLIENT_FILES_DIR = System.getProperty("user.dir") + "/files/";
