@@ -6,6 +6,11 @@ package com.sysc.tftp.client;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
@@ -150,7 +155,8 @@ public class Client {
 	private void saveFileData(String filePath) {
 		File f = new File(filePath); // File object for seeing if it already
 										// exists
-		FileOutputStream incoming; // FileOutputStream for incoming data
+		//FileOutputStream incoming; // FileOutputStream for incoming data
+		OutputStream incoming;
 		int currentBlock = 0; // Current block of data being received
 		int currentBlockFromPacket = 0; // Current block # from the packet
 		DatagramPacket receivePacket; // Incoming datagram packet
@@ -201,7 +207,16 @@ public class Client {
 							f = new File(filePath);
 	
 							// Open new FileOutputStream to place file
-							incoming = new FileOutputStream(f, true);
+							//incoming = new FileOutputStream(f, true);
+							
+							try {
+							
+								incoming = Files.newOutputStream(Paths.get(filePath), StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
+								
+							} catch (AccessDeniedException e) { 		//trying to write to directory without write permissions
+								System.out.println("Access Violation.");
+								break;
+							}
 	
 							// Extract block # from incoming packet
 							currentBlockFromPacket = ((packetData[2] << 8) & 0xFF00) | (packetData[3] & 0xFF);
@@ -214,17 +229,31 @@ public class Client {
 										receivePacket.getLength());
 		
 								// Write packet data to the file
-								incoming.write(fileData);
+								
+								try {
+									
+									incoming.write(fileData);	//throws FileAlreadyExistsException, IOException
 		
-								// Wait for data to be written to file before doing
-								// anything else
-								incoming.getFD().sync();
+									// Wait for data to be written to file before doing
+									// anything else
+									//incoming.getFD().sync();
+									
+									// Send ACK for received block back to server
+									sendACK(currentBlock, receivePacket.getPort());
 		
-								// Send ACK for received block back to server
-								sendACK(currentBlock, receivePacket.getPort());
-		
-								//Close file output stream
-								incoming.close();
+									//Close file output stream
+									incoming.close();
+								
+								} catch (AccessDeniedException e) {  //tried to write to directory without write permissions
+									System.out.println("Access Violation.");
+									break;
+								} catch (FileAlreadyExistsException e2) {  		//tried to write a file that already exists
+									System.out.println("File Already Exists.");
+									break;
+								} catch (IOException e3) {						//insufficient disk space for the file transfer
+									System.out.println("Disk Full.");
+									break;
+								}
 								
 							//Received wrong data packet, re-send correct ACK
 							} else {
@@ -298,7 +327,7 @@ public class Client {
 	 * is the last packet for the file.
 	 */
 	public boolean lastBlock(DatagramPacket datagramPacket) {
-		// If datagram packet length is less than MAX_PACKET_SIZE its the last
+		// If datagram packet length is less than MAX_PACKET_SIZE it's the last
 		// block
 		if (datagramPacket.getLength() < Variables.MAX_PACKET_SIZE) {
 			return true;

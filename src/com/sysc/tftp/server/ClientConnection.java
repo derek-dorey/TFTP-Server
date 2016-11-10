@@ -405,33 +405,6 @@ public class ClientConnection implements Runnable {
 		//Start of Try/Catch
 		try {
 			
-			//Get parent folder of file 
-			String parentFolder = new File(filename).getParent();
-			
-			//Check that there is room in folder for new file 
-			if (new File(parentFolder).getUsableSpace() < (long) fileContent.length) {
-				
-				//Set error flag
-				errorDetected = true;
-				
-				//Trigger no space left error
-				return packageError(Variables.ERROR_3);
-				
-			}
-		
-		//Security error checking if enough space
-		} catch (SecurityException e1) {
-			
-			//Set error flag
-			errorDetected = true;
-			
-			//Return access violation error
-			return packageError(Variables.ERROR_2);
-		} 
-		
-		//Start of Try/Catch
-		try {
-			
 			//Get path to filename
 			Path p = Paths.get(filename);
 			
@@ -444,13 +417,13 @@ public class ClientConnection implements Runnable {
 			//Close output stream
 			out.close();
 			
-		} catch (AccessDeniedException e) {
+		} catch (AccessDeniedException e) {  //tried to write to directory without write permissions, return access violation
 			errorDetected = true;
 			return packageError(Variables.ERROR_2);
-		} catch (FileAlreadyExistsException e2) {
+		} catch (FileAlreadyExistsException e2) {  //tried to write a file that already exists, return file already exists
 			errorDetected = true;
 			return packageError(Variables.ERROR_6);
-		} catch (IOException e3) {
+		} catch (IOException e3) {					//insufficient disk space for the file transfer, return disk full
 			errorDetected = true;
 			return packageError(Variables.ERROR_3);
 		}
