@@ -9,6 +9,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -27,15 +28,15 @@ public class ClientConnection implements Runnable {
 	private DatagramPacket receivePacket = null, sendPacket = null;
 	private DatagramSocket sendReceiveSocket = null;
 
-	private byte[] data = null; // holds the original request
-	private byte[] fileBytes = null; // hold bytes of file to transfer
-	private int blockNumber = 0; // current block of data being received/sent
+	private byte[] data = null; 		// holds the original request
+	private byte[] fileBytes = null;	// hold bytes of file to transfer
+	private int blockNumber = 0; 		// current block of data being received/sent
 
 	// client information: port, IP, length of data
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
 
-	private boolean errorDetected = false; // flag set when error detected,
+	private boolean errorDetected = false; 	// flag set when error detected,
 											// signals closing thread
 
 	public ClientConnection(byte[] data, int len, InetAddress ip, int port) {
@@ -53,8 +54,12 @@ public class ClientConnection implements Runnable {
 	public void run() {
 		byte[] response = null;
 		String filename = null;
-
+		int timeouts = 0;				//Counter for timeouts
+		int currentBlockFromPacket = 0;	//Current block number from incoming packet
+		
+		//Verify incoming request type
 		Request req = verifyRequest(data);
+		
 		if (req == null || req == Request.ERROR) {
 			// TODO
 			// issue (iteration 2)
@@ -63,49 +68,90 @@ public class ClientConnection implements Runnable {
 		filename = Variables.SERVER_FILES_DIR + pullFilename(data);
 		File f = new File(filename);
 
-		// Create a response.
+		//Read request
 		if (req == Request.RRQ) {
+			
 			if (fileBytes == null) {
 
 				fileBytes = new byte[(int) f.length()];
 
-				// Attempt to open the file.... if doesNotExist... create error
-				// response in catch block
+				// Attempt to open the file
 				try {
+					
+					//Open file input stream with requested file 
 					FileInputStream fis = new FileInputStream(filename);
+					
+					//Read x bytes from file 
 					fis.read(fileBytes);
+					
+					//Close stream
 					fis.close();
+			
+				//Thrown when file not found 
 				} catch (Exception e) {
+					
+					//Error detected
 					errorDetected = true;
+					
+					//File not found error
 					response = packageError(Variables.ERROR_1);
+					
 				}
 
+				//If error flag set
 				if (!errorDetected) {
+					
+					//Increment block number
 					blockNumber++;
+					
+					//Get file data to send
 					response = packageRead();
+					
 				}
+				
 			}
+			
+		//Write request
 		} else if (req == Request.WRQ) {
-			// client requesting to write a file that already exists
+			
+			// Client requesting to write a file that already exists
 			if (f.exists() && !f.isDirectory()) {
-				// form the error message response
+				
+				// Form the error message response
 				response = packageError(Variables.ERROR_6);
+				
+				// Set error detected flag
 				errorDetected = true;
+				
 			} else {
-				// valid write request: format ACK response
+				
+				// Valid write request: format ACK response
 				Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
 				Variables.ACK[3] = (byte) blockNumber;
 				response = Variables.ACK;
+				
 			}
+			
 		}
 
+		//Create datagram packet to send 
 		sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
 
+		//Log packet sending
 		Logger.logPacketSending(sendPacket);
 
+		// Start of Try/Catch
 		try {
+			
+			// Initialize datagram socket
 			sendReceiveSocket = new DatagramSocket();
+			
+			// Set socket timeout for receiving 
+			sendReceiveSocket.setSoTimeout(Variables.packetTimeout);
+			
+			//Send packet 
 			sendReceiveSocket.send(sendPacket);
+			
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -132,71 +178,163 @@ public class ClientConnection implements Runnable {
 			return;
 		}
 
+		//Loop until break
 		while (true) {
-			// if an error packet was sent, break and terminate thread
+			
+			//If an error packet was sent
 			if (errorDetected) {
+				
+				//Break while loop
 				break;
 			}
 
+			//Initialize byte array for incoming data
 			byte[] received = new byte[Variables.MAX_PACKET_SIZE];
+			
+			//Initialize new packet to receive
 			receivePacket = new DatagramPacket(received, received.length);
-
-			Logger.log("Server: Waiting for packet.");
-			try {
-				// Block until a datagram is received via sendReceiveSocket.
-				sendReceiveSocket.receive(receivePacket);
+			
+			//Start of Try/Catch
+			try { 
+				
+			
+				// Start of Try/Catch
+				try {
+					
+					// Block until a datagram is received via sendReceiveSocket.
+					sendReceiveSocket.receive(receivePacket);
+				
+				//Timeout occured				
+				} catch (SocketTimeoutException e) {
+					
+	
+					//Log timeout
+					Logger.log("Timeout occured.");
+					
+					//Check if timeout limit reached
+					if (timeouts >= Variables.packetRetransmits) {
+						
+						//Log the error
+						Logger.log("Too many timeouts, cancelling receiving the file.");
+						System.exit(1);
+						
+					}
+					
+					//Log resending data packet
+					Logger.log("Resending data packet");
+					
+					//Increment timeouts counter
+					timeouts ++;
+					
+					//Resend previous packet
+					sendReceiveSocket.send(sendPacket);
+					
+					//Go back to start of while loop
+					continue;
+				
+				}
+	
+			//Error with socket
 			} catch (IOException e) {
+				
 				e.printStackTrace();
 				System.exit(1);
+				
 			}
-
+			
+			
+			//If we got here we received the packet, no timeouts
+			
+			//Reset timeouts to 0
+			timeouts = 0;
+			
 			// Process the received datagram.
 			Logger.logPacketReceived(receivePacket);
 
+			//Get block number from packet
+			currentBlockFromPacket = ((received[2] << 8) & 0xFF00) | (received[3] & 0xFF);
+
+			//If read request
 			if (req == Request.RRQ) {
+				
+				//Verify incoming data is an ACK
 				if (verifyACK(received)) {
+					
+					//Generate appropriate response
 					response = packageRead();
+				
+				//Sorcerer's Apprentice Avoidance
 				} else {
-					// TODO
-					// issue, request is not correct
-					// iteration 2
-					break;
+
+					//Log ignore to logger
+					Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
+					
 				}
+				
+			//If write request
 			} else if (req == Request.WRQ) {
+				
+				//Very the incoming data
 				if (verifyDATA(received)) {
+					
+					//Start of Try/Catch
 					try {
+						
+						//Write data to file 
 						response = writeToFile(filename,
 								Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+					
+					//Error writting to file
 					} catch (Throwable e) {
+						
 						e.printStackTrace();
+						
 					}
+				
+				//Timeout receiving ACK on other end must have occured
 				} else {
-					// TODO
-					// issue, request is not correct
-					// iteration 2
-					break;
+					
+					//If we get here we received a data block from the past that may have been delayed / re-transmitted
+					//We ignore it, and by not doing anything the last ACK we sent will be re-sent back bellow, so
+					//hopefully we will now get the correct data block back, or if the correct data block is already
+					//on its way here this ACK will be ignored by the client.
+					
+					
 				}
 			}
 
+			//Create new response packet 
 			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
+			
+			//Log we are sending this packet
 			Logger.logPacketSending(sendPacket);
 
+			//Start of Try/Catch
 			try {
+				
+				//Send the packet
 				sendReceiveSocket.send(sendPacket);
+				
+			//Error sending packet
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(1);
 			}
 
+			//Log the server sent the packet successfully
 			Logger.log("Server: packet sent using port " + sendReceiveSocket.getLocalPort());
 			Logger.log("");
 
+			//If read request and we are done
 			if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
 				fileBytes = null;
 				break;
+				
+			//If write request and we are done 
 			} else if (req == Request.WRQ && receivePacket.getLength() < Variables.MAX_PACKET_SIZE) {
 				break;
 			}
+			
 		}
 
 		// We're finished with this socket, so close it.
@@ -211,26 +349,47 @@ public class ClientConnection implements Runnable {
 	 * @return Part, if not all, of file
 	 */
 	public byte[] packageRead() {
-		byte[] finalPackage = null;
-		byte[] dataPackage = new byte[Variables.DATA.length];
+		byte[] finalPackage = null;	//Datagram bytes to return
+		byte[] dataPackage = new byte[Variables.DATA.length];	//Data portion of the datagram
 		
-		System.arraycopy(Variables.DATA, 0, dataPackage, 0, 2);
-		dataPackage[2] = (byte) ((byte) blockNumber >> 8);
-		dataPackage[3] = (byte) blockNumber;
+		System.arraycopy(Variables.DATA, 0, dataPackage, 0, 2);	//Copy data packet type to array
 		
+		dataPackage[2] = (byte) ((byte) blockNumber >> 8);	//Set block number in packet
+		dataPackage[3] = (byte) blockNumber;				//Set block number in packet
+		
+		//This isn't the last packet
 		if (fileBytes.length > Variables.MAX_PACKET_SIZE - Variables.DATA.length) {
+			
+			//Initialize new final packet to return
 			finalPackage = new byte[Variables.MAX_PACKET_SIZE];
+			
+			//Copy packet type into packet being returned
 			System.arraycopy(dataPackage, 0, finalPackage, 0, Variables.DATA.length);
+			
+			//Copy packet data into packet being returned
 			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length,
 					Variables.MAX_PACKET_SIZE - Variables.DATA.length);
+			
+			//Update current position in file 
 			fileBytes = Arrays.copyOfRange(fileBytes, Variables.MAX_PACKET_SIZE - Variables.DATA.length,
 					fileBytes.length);
+			
+		//This is the last packet
 		} else {
+			
+			//Initialize new final packet to return
 			finalPackage = new byte[Variables.DATA.length + fileBytes.length];
+			
+			//Copy packet type into packet being returned
 			System.arraycopy(dataPackage, 0, finalPackage, 0, Variables.DATA.length);
+			
+			//Copy packet data into packet being returned			
 			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length, fileBytes.length);
 		}
+		
+		//Return entire data packet
 		return finalPackage;
+		
 	}
 
 	/**
@@ -243,23 +402,48 @@ public class ClientConnection implements Runnable {
 	 */
 	public byte[] writeToFile(String filename, byte[] fileContent) throws Throwable {
 		
+		//Start of Try/Catch
 		try {
+			
+			//Get parent folder of file 
 			String parentFolder = new File(filename).getParent();
+			
+			//Check that there is room in folder for new file 
 			if (new File(parentFolder).getUsableSpace() < (long) fileContent.length) {
+				
+				//Set error flag
 				errorDetected = true;
+				
+				//Trigger no space left error
 				return packageError(Variables.ERROR_3);
+				
 			}
+		
+		//Security error checking if enough space
 		} catch (SecurityException e1) {
+			
+			//Set error flag
 			errorDetected = true;
+			
+			//Return access violation error
 			return packageError(Variables.ERROR_2);
 		} 
 		
-		
+		//Start of Try/Catch
 		try {
+			
+			//Get path to filename
 			Path p = Paths.get(filename);
+			
+			//Open a new output stream
 			OutputStream out = Files.newOutputStream(p, StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
+			
+			//Write the new data to the file 
 			out.write(fileContent);	
+			
+			//Close output stream
 			out.close();
+			
 		} catch (AccessDeniedException e) {
 			errorDetected = true;
 			return packageError(Variables.ERROR_2);
@@ -273,11 +457,15 @@ public class ClientConnection implements Runnable {
 		
 		// write successful.. return ACK
 		byte[] ackPackage = new byte[Variables.ACK.length];	
+		
+		//Copy ACK packet type into package
 		System.arraycopy(Variables.ACK, 0, ackPackage, 0, 2);
 
+		//Copy block number into package
 		ackPackage[2] = (byte) ((byte) blockNumber >> 8);
 		ackPackage[3] = (byte) blockNumber;
 		
+		//return ACK package
 		return ackPackage;
 	}
 
@@ -289,6 +477,7 @@ public class ClientConnection implements Runnable {
 	 * @return if proper ACK message
 	 */
 	public boolean verifyACK(byte[] data) {
+		
 		Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
 		Variables.ACK[3] = (byte) blockNumber;
 		for (int i = 0; i < Variables.ACK.length; i++) {
@@ -296,6 +485,7 @@ public class ClientConnection implements Runnable {
 				return false;
 			}
 		}
+		
 		blockNumber++;
 		return true;
 	}
@@ -308,17 +498,34 @@ public class ClientConnection implements Runnable {
 	 * @return if proper DATA message
 	 */
 	public boolean verifyDATA(byte[] data) {
+		
 		if (data.length <= Variables.DATA.length) { // no data in message
 			return false;
 		}
+		
+		//Increment current block number 
 		blockNumber++;
+		
+		//Set what the data packet block numbers should be 
 		Variables.DATA[2] = (byte) ((byte) blockNumber >> 8);
 		Variables.DATA[3] = (byte) blockNumber;
+		
+		//Loop each element of data block characteristics
 		for (int i = 0; i < Variables.DATA.length; i++) {
+			
+			//Match data packet with what is expected
 			if (Variables.DATA[i] != data[i]) {
+				
+				//Not a valid data block, so decrement the block counter
+				blockNumber--;
+				
+				//Invalid block
 				return false;
+				
 			}
 		}
+		
+		//Valid block
 		return true;
 	}
 

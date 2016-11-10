@@ -57,6 +57,7 @@ public class Variables {
 
 	// Size of the header section of a data packet (op code + block #)
 	public static final int DATA_PACKET_HEADER_SIZE = 4;
+	
 	// Size of the ack packet
 	public static final int ACK_DATA_SIZE = 4;
 
@@ -72,5 +73,11 @@ public class Variables {
 	
 	public static final String SET_MODE_TEST = "set mode test";
 	public static final String SET_MODE_NORMAL = "set mode normal";
+	
+	// packet timeout in ms 
+	public static final int packetTimeout = 2000;
+	
+	// max packet resend attempts  
+	public static final int packetRetransmits = 5;	
 	
 }

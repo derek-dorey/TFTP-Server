@@ -96,7 +96,10 @@ public class Client {
 
 			// Open new datagram socket
 			sendReceiveSocket = new DatagramSocket(tid);
-
+			
+			//Specify the timeout for the socket
+			sendReceiveSocket.setSoTimeout(Variables.packetTimeout);
+			
 			// If normal run mode use port 69, port 23 otherwise
 			if (run == Variables.Mode.NORMAL) {
 				sendPort = Variables.NORMAL_PORT;
@@ -151,17 +154,10 @@ public class Client {
 		int currentBlock = 0; // Current block of data being received
 		int currentBlockFromPacket = 0; // Current block # from the packet
 		DatagramPacket receivePacket; // Incoming datagram packet
-		byte[] packetData = new byte[Variables.MAX_PACKET_SIZE]; // Byte array
-																	// for
-																	// packet
-																	// data
-		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size
-																									// of
-																									// data
-																									// in
-																									// data
-																									// packet
-
+		byte[] packetData = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for packet data
+		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size of data in data packet
+		int timeouts = 0;	//Number of timeouts which have occured
+		
 		// Start of Try/Catch
 		try {
 
@@ -177,63 +173,112 @@ public class Client {
 
 			// While we have more packets to receive, loop
 			do {
-				// Increment block counter
-				currentBlock++;
-
-				// Receive an incoming packet
-				sendReceiveSocket.receive(receivePacket);
-
-				// Write packet outgoing to log
-				Logger.logPacketReceived(receivePacket);
-
-				// Start of Try/Catch
-				try {
-					// Check if data packet
-					if (packetData[0] == 0 && packetData[1] == 3) {
-
-						// System.out.println(filePath);
-
-						// Reload the file
-						f = new File(filePath);
-
-						// Open new FileOutputStream to place file
-						incoming = new FileOutputStream(f, true);
-
-						// Extract block # from incoming packet
-						int blockNumber = ((packetData[2] << 8) & 0xFF00) & (packetData[3] & 0xFF);
-
-						// Grab file data from data packet
-						fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
-								receivePacket.getLength());
-
-						// Write packet data to the file
-						incoming.write(fileData);
-
-						// Wait for data to be written to file before doing
-						// anything else
-						incoming.getFD().sync();
-
-						// Send ACK for received block back to server
-						sendACK(currentBlock, receivePacket.getPort());
-
-						incoming.close();
-
-					} else if (packetData[0] == 0 && packetData[1] == 5) {
-						// If an error code is received from server
-						// Invalid op code
-
-						fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
-								receivePacket.getLength());
-
-						String errorMsg = new String(fileData, "UTF-8");
-						System.out.println(errorMsg);
-					}
+				
+				//Start of Try/Catch
+				try { 
+					
+					// Increment block counter
+					currentBlock++;
+	
+					// Receive an incoming packet
+					sendReceiveSocket.receive(receivePacket);
+					
+					//Reset timeout counter
+					timeouts = 0;
+					
+					// Write packet outgoing to log
+					Logger.logPacketReceived(receivePacket);
+	
+					// Start of Try/Catch
+					try {
+						
+						// Check if data packet
+						if (packetData[0] == 0 && packetData[1] == 3) {
+	
+							// System.out.println(filePath);
+	
+							// Reload the file
+							f = new File(filePath);
+	
+							// Open new FileOutputStream to place file
+							incoming = new FileOutputStream(f, true);
+	
+							// Extract block # from incoming packet
+							currentBlockFromPacket = ((packetData[2] << 8) & 0xFF00) | (packetData[3] & 0xFF);
+							
+							//If incoming block is the block we expected
+							if (currentBlockFromPacket == currentBlock ) {
+								
+								// Grab file data from data packet
+								fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+										receivePacket.getLength());
+		
+								// Write packet data to the file
+								incoming.write(fileData);
+		
+								// Wait for data to be written to file before doing
+								// anything else
+								incoming.getFD().sync();
+		
+								// Send ACK for received block back to server
+								sendACK(currentBlock, receivePacket.getPort());
+		
+								//Close file output stream
+								incoming.close();
+								
+							//Received wrong data packet, re-send correct ACK
+							} else {
+								
+								Logger.log("Client: Received block #" + currentBlockFromPacket + ", Expected block #" + (currentBlock - 1) + " (resending ACK)");
+								
+								//Reduce block counter
+								currentBlock --;
+								
+								// Send ACK for previous received block
+								sendACK(currentBlock, receivePacket.getPort());
+								
+							}
+							
+						} else if (packetData[0] == 0 && packetData[1] == 5) {
+							// If an error code is received from server
+							// Invalid op code
+	
+							fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+									receivePacket.getLength());
+	
+							String errorMsg = new String(fileData, "UTF-8");
+							System.out.println(errorMsg);
+						}
+						
 					// Sync failed, we could not save the bytes
-				} catch (SyncFailedException e) {
-					// Output error and return
-					System.out.println("Could not save the full file! An error occured");
-					// incoming.close();
-					return;
+					} catch (SyncFailedException e) {
+						// Output error and return
+						System.out.println("Could not save the full file! An error occured");
+						// incoming.close();
+						return;
+					}
+				
+				//Timeout occured
+				} catch (SocketTimeoutException e) {
+					
+					//Check if timeout limit reached
+					if (timeouts >= Variables.packetRetransmits) {
+						
+						//Log the error
+						Logger.log("Too many timeouts, cancelling receiving the file.");
+						System.exit(1);
+						
+					}
+							
+					//Increment timeouts counter
+					timeouts ++;
+					
+					//Reduce block counter
+					currentBlock --;
+					
+					// Send ACK for previous received block
+					sendACK(currentBlock, receivePacket.getPort());
+					
 				}
 
 			} while (!lastBlock(receivePacket));
@@ -272,12 +317,7 @@ public class Client {
 		int tid; // Random transfer ID generated
 		Variables.Mode run = Variables.CLIENT_MODE;
 		DatagramPacket sendPacket; // A packet to send request to server
-		File f = new File(Variables.CLIENT_FILES_DIR + fileName); // File object
-																	// for
-																	// seeing if
-																	// it
-																	// already
-																	// exists
+		File f = new File(Variables.CLIENT_FILES_DIR + fileName); // File object for seeing if it already exists
 
 		// Check if file already exists
 		if (!f.exists() || f.isDirectory()) {
@@ -304,8 +344,7 @@ public class Client {
 			// Start of Try/Catch
 			try {
 
-				// Generate byte array to send to server for request type and
-				// file
+				// Generate byte array to send to server for request type and file
 				requestMsg = newRequest((byte) 2, fileName);
 
 				// Create new datagram packet to send
@@ -340,19 +379,15 @@ public class Client {
 	 */
 	private void sendFileData(String filePath) {
 		FileInputStream outgoing; // FileOutputStream for outgoing data
-		
-		// Byte array for ack packet data
-		byte[] incomingPacket = new byte[Variables.MAX_PACKET_SIZE];
-		// Byte array for file data being sent
-		byte[] data = new byte[Variables.MAX_PACKET_SIZE];
-		// Max size of the data in the packet
-		byte[] outgoingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];
-		// Max size of the data in the packet
-		byte[] incomingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE];
-
+		byte[] incomingPacket = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for ack packet data
+		byte[] data = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for file data being sent
+		byte[] outgoingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Max size of the data in the packet
+		byte[] incomingData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Max size of the data in the packet
 		byte[] dataSection;// Size of the data in the packet
 		int blockNumber = 0; // Current block number being sent
 		int bytesRead = 0; // Number of bytes read
+		int timeouts = 0;	//Number of timeouts which have occured
+		int currentBlockFromPacket = 0;	//Current block number from incoming packet
 		boolean lastBlock = false;
 
 		// Start of Try/Catch
@@ -363,8 +398,9 @@ public class Client {
 			// Open new FileOutputStream to place file
 			outgoing = new FileInputStream(filePath);
 			
+			//Loop until last block breaks this
 			while(true) {
-			//do { // Breaks if error packet is sent.. or after final ACK is sent
+				
 				// Increment block number
 				blockNumber++;
 
@@ -373,86 +409,146 @@ public class Client {
 
 				Logger.log("Client: Waiting for packet.");
 
-				// Block until a datagram is received via sendReceiveSocket.
-				sendReceiveSocket.receive(receivePacket);
+				// Start of Try/Catch
+				try {
+				
+					// Block until a datagram is received via sendReceiveSocket.
+					sendReceiveSocket.receive(receivePacket);
+	
+					//Reset timeout counter
+					timeouts = 0;
+					
+					// Write packet incoming to log
+					Logger.logPacketReceived(receivePacket);
+	
+					// If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER
+					// IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
+	
+					if (incomingPacket[0] == 0 && incomingPacket[1] == 4) {
+	
+						Logger.log("Received ACK response");
+	
+						// Last block is sent... break
+						if(lastBlock == true){	
+							
+							//in the event we write a small file (<1 block) to a server-side directory without write permissions, we have to listen for one more response from the server (so that the server can attempt to write the file)
+							break;
+							
+						}
+						
+						// Extract block # from incoming packet
+						currentBlockFromPacket = ((incomingPacket[2] << 8) & 0xFF00) | (incomingPacket[3] & 0xFF);
+						
+						//Check if the correct block
+						if ( currentBlockFromPacket == (blockNumber - 1) ) {
+							
+							// Read the next set of bytes
+							bytesRead = outgoing.read(outgoingData);
+		
+							// this a last minute fix, should be properly handled later
+							if (bytesRead <= 0) {
+								dataSection = new byte[0];
+								bytesRead = 0;
+							} else {
+								// Make new byte array to exact length
+								dataSection = new byte[bytesRead];
+							}
+		
+							// Copy incoming data to dataSection byte array
+							System.arraycopy(outgoingData, 0, dataSection, 0, bytesRead);
+		
+							// Initialize packet to correct size
+							data = new byte[bytesRead + Variables.DATA_PACKET_HEADER_SIZE];
+		
+							// Data packet op code and block #
+							data[0] = 0;
+							data[1] = 3;
+							data[2] = (byte) ((byte) blockNumber >> 8);
+							data[3] = (byte) blockNumber;
+		
+							// Copy file data into packet
+							System.arraycopy(dataSection, 0, data, 4, dataSection.length);
+		
+							// Create new datagram packet to send
+							sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(),
+									receivePacket.getPort());
+		
+							// Send the packet to the server
+							sendReceiveSocket.send(sendPacket);
+		
+							// Write packet outgoing to log
+							Logger.logPacketSending(sendPacket);
+						
+						//Sorcerer's Apprentice Avoidance
+						} else {
+							
+							//Log ignore to logger
+							Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
+							
+						}
+			
+					//Error packet received
+					} else if (incomingPacket[0] == 0 && incomingPacket[1] == 5) { 
 
-				// Write packet incoming to log
-				Logger.logPacketReceived(receivePacket);
-
-				// If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER
-				// IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
-
-				if (incomingPacket[0] == 0 && incomingPacket[1] == 4) {
-
-					Logger.log("Received ACK response");
-
-					// Read the next set of bytes
-					bytesRead = outgoing.read(outgoingData);
-
-					// TODO
-					// this a last minute fix, should be properly handled later
-					if (bytesRead <= 0) {
-						dataSection = new byte[0];
-						bytesRead = 0;
-					} else {
-						// Make new byte array to exact length
-						dataSection = new byte[bytesRead];
+						// Get the message from the error packet
+						incomingData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+								receivePacket.getLength());
+	
+						// Convert byte array to UTF8 string
+						String errorMsg = new String(incomingData, "UTF-8");
+	
+						// Print error msg
+						System.out.println(errorMsg);
+	
+						// Error packet sent.. break
+						break;
 					}
+					
+					//Check if the next block is the last one
+					if ( !(bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE) ) {
+						
+						//Specify the next block is the last one
+						lastBlock = true;
+						
+					}
+				
+				//Timeout occured
+				} catch (SocketTimeoutException e) {
+					
+					//Log timeout
+					Logger.log("Timeout occured.");
+					
+					//Check if timeout limit reached
+					if (timeouts >= Variables.packetRetransmits) {
+						
+						//Log the error
+						Logger.log("Too many timeouts, cancelling receiving the file.");
+						System.exit(1);
+						
+					}
+					
+					//Log resending data packet
+					Logger.log("Resending data packet");
+					
+					//Increment timeouts counter
+					timeouts ++;
+					
+					//Reduce block counter
+					blockNumber --;
 
-					// Copy incoming data to dataSection byte array
-					System.arraycopy(outgoingData, 0, dataSection, 0, bytesRead);
-
-					// Initialize packet to correct size
-					data = new byte[bytesRead + Variables.DATA_PACKET_HEADER_SIZE];
-
-					// Data packet op code and block #
-					data[0] = 0;
-					data[1] = 3;
-					data[2] = (byte) ((byte) blockNumber >> 8);
-					data[3] = (byte) blockNumber;
-
-					// Copy file data into packet
-					System.arraycopy(dataSection, 0, data, 4, dataSection.length);
-
-					// Create new datagram packet to send
-					sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(),
-							receivePacket.getPort());
-
-					// Send the packet to the server
+					// Resend the last packet to the server
 					sendReceiveSocket.send(sendPacket);
 
 					// Write packet outgoing to log
 					Logger.logPacketSending(sendPacket);
-
-				} else if (incomingPacket[0] == 0 && incomingPacket[1] == 5) { 
-					// error packet received
-					// Get the message from the error packet
-					incomingData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
-							receivePacket.getLength());
-
-					// Convert byte array to UTF8 string
-					String errorMsg = new String(incomingData, "UTF-8");
-
-					// Print error msg
-					System.out.println(errorMsg);
-
-					// Error packet sent.. break
-					break;
+					
 				}
-				//
-				// // last block is sent... break
-				if(lastBlock==true){	//in the event we write a small file (<1 block) to a server-side directory without write permissions, we have to listen for one more response from the server (so that the server can attempt to write the file)
-					break;
-				}
-				//
-				if (!(bytesRead == Variables.MAX_PACKET_SIZE -Variables.DATA_PACKET_HEADER_SIZE)){
-					lastBlock=true;
-				}
-		}
-			//} while (bytesRead == Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE);
+				
+			}
 			
 			// Close the FileInputStream
 			outgoing.close();
+			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
