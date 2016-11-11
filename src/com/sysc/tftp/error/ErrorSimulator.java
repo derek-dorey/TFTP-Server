@@ -25,10 +25,8 @@ public class ErrorSimulator implements Runnable {
 	private boolean running = true;
 
 	private List<Thread> threads = new ArrayList<Thread>(); // list of threads
-	private Queue<ErrorThread> nextThread = new LinkedList<ErrorThread>(); // next
-																			// thread
-																			// to
-																			// run
+	// next thread to run
+	private Queue<ErrorThread> nextThread = new LinkedList<ErrorThread>();
 
 	public ErrorSimulator() {
 		try {

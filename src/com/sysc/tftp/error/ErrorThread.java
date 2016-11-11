@@ -20,5 +20,10 @@ public abstract class ErrorThread implements Runnable {
 	public boolean isRequest(int packet, byte[] data) {
 		return data[1] == packet;
 	}
+	
+	public boolean isPosition(int position, byte[] data) {
+		int num = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
+		return position == num;
+	}
 
 }
