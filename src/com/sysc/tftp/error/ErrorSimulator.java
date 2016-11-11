@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -53,6 +54,9 @@ public class ErrorSimulator implements Runnable {
 			// Block until a datagram packet is received from receiveSocket.
 			try {
 				receiveSocket.receive(receivePacket);
+			} catch (SocketException se) {
+				running = false;
+				continue;
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(1);
@@ -66,8 +70,8 @@ public class ErrorSimulator implements Runnable {
 						receivePacket.getAddress(), receivePacket.getPort()));
 			} else {
 				ErrorThread error = nextThread.poll();
-				error.setInfo(receivePacket.getData(), receivePacket.getLength(),
-						receivePacket.getAddress(), receivePacket.getPort());
+				error.setInfo(receivePacket.getData(), receivePacket.getLength(), receivePacket.getAddress(),
+						receivePacket.getPort());
 				t = new Thread(error);
 			}
 			threads.add(t);
@@ -85,26 +89,30 @@ public class ErrorSimulator implements Runnable {
 				@Override
 				public void run() {
 					Scanner scan = new Scanner(System.in);
+					printHelp();
 					while (true) {
-						System.out.println("Type '!quit' to shutdown error simulator");
 						String s = scan.nextLine();
-						if ("!quit".equals(s)) {
+						if ("quit".equals(s)) {
 							scan.close();
 							closeThreads();
 							break;
-						} else if ("error".equals(s)) {
-							addErrorToQueue(scan);
-						} else {
-							switch (s.toLowerCase().trim()) {
-							case Variables.SET_VERBOSE_ON:
-								Variables.VERBOSE = true;
-								System.out.println("\nVerbose: [ON]\n");
-								break;
-							case Variables.SET_VERBOSE_OFF:
-								Variables.VERBOSE = false;
-								System.out.println("\nVerbose: [OFF]\n");
-								break;
+						} else if ("help".equals(s)) {
+							printHelp();
+						} else if (s.toLowerCase().contains("verbose")) {
+							try {
+								String setting = s.split(" ")[1].toLowerCase().trim();
+								if ("on".equals(setting)) {
+									Variables.VERBOSE = true;
+									System.out.println("\nVerbose: [ON]\n");
+								} else if ("off".equals(setting)) {
+									Variables.VERBOSE = false;
+									System.out.println("\nVerbose: [OFF]\n");
+								}
+							} catch (Exception e) {
+								continue;
 							}
+						} else if (s != null && !s.isEmpty()) {
+							handleSim(s);
 						}
 					}
 				}
@@ -137,88 +145,76 @@ public class ErrorSimulator implements Runnable {
 		ErrorSimulator es = new ErrorSimulator();
 		es.start();
 	}
-
-	public void addErrorToQueue(Scanner scan) {
-		while (true) {
-			System.out.println();
-			System.out.println("Select next operation to use: ");
-			System.out.println("(1) Lost a packet");
-			System.out.println("(2) Delay packet");
-			System.out.println("(3) Duplicate packet");
-			System.out.println("(0) Go Back");
-			String s = scan.nextLine();
-			try {
-				int operation = Integer.parseInt(s);
-				if (operation == 0) {
-					return;
-				} else if (operation > 3 || operation < 0) {
-					System.out.println("Invalid input.");
-				} else {
-					System.out.println();
-					System.out.println("Select which packet type to target: ");
-					System.out.println("(1) RRQ");
-					System.out.println("(2) WRQ");
-					System.out.println("(3) DATA");
-					System.out.println("(4) ACK");
-
-					s = scan.nextLine();
-					int packet = Integer.parseInt(s);
-					if (packet > 4 || packet < 0) {
-						System.out.println("Invalid input.");
-					} else {
-						if (packet == 3 || packet == 4) {
-							System.out.println();
-							System.out.println("Which packet?");
-
-							s = scan.nextLine();
-							int position = Integer.parseInt(s);
-							if (position < 1) {
-								System.out.println("Invalid input.");
-							} else if (operation == 3) {
-								System.out.println();
-								System.out.println("How much delay between duplicated packets?");
-
-								s = scan.nextLine();
-								int delay = Integer.parseInt(s);
-								if (delay < 0) {
-									System.out.println("Invalid input.");
-								} else {
-									addToQueue(operation, packet, position, delay);
-									return;
-								}
-							} else {
-								addToQueue(operation, packet, position, 0);
-								return;
-							}
-						} else if (operation == 3) {
-							while (true) {
-								System.out.println();
-								System.out.println("How much delay between duplicated packets?");
-
-								s = scan.nextLine();
-								int delay = Integer.parseInt(s);
-								if (delay < 0) {
-									System.out.println("Invalid input.");
-								} else {
-									addToQueue(operation, packet, 1, delay);
-									return;
-								}
-							}
-						} else {
-							addToQueue(operation, packet, 1, 0);
-							return;
-						}
-					}
-				}
-			} catch (Exception e) {
-				System.out.println("Invalid input.");
+	
+	/**
+	 * Handles commands with parameters
+	 * @param s, user command
+	 */
+	public void handleSim(String s) {
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		String input = s.toLowerCase().trim();
+		try {
+			String params[] = input.split(" ");
+			if (!"delay".equals(params[0]) && !"dup".equals(params[0]) && !"lose".equals(params[0])) {
+				return;
+			} else if (!requests.contains(params[1])) {
+				System.out.println("Invalid request type");
+				return;
+			} else if (("delay".equals(params[0]) || "dup".equals(params[0])) && params.length < 4) {
+				System.out.println("Invalid parameters");
+				return;
+			} else if ("lose".equals(params[0]) && params.length < 3) {
+				System.out.println("Invalid parameters");
+				return;
 			}
+
+			int position = Integer.parseInt(params[2]);
+			if (position <= 0) {
+				System.out.println("Cannot have negative numbers or zero");
+				return;
+			}
+
+			int requestType = requests.indexOf(params[1]) + 1;
+			if ("lose".equals(params[0])) {
+				if (requestType == 1 || requestType == 2) {
+					System.out.println("No point losing the init request");
+					return;
+				}
+				addToQueue(1, requestType, position, 0);
+			} else {
+				int delay = Integer.parseInt(params[3]);
+				if (delay < 0) {
+					System.out.println("Cannot have negative numbers");
+					return;
+				}
+
+				if ("delay".equals(params[0])) {
+					if (requestType == 1 || requestType == 2) {
+						System.out.println("No point in delaying the init request");
+						return;
+					}
+					addToQueue(2, requestType, position, delay);
+				} else if ("dup".equals(params[0])) {
+					addToQueue(3, requestType, position, delay);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			e.printStackTrace();
+			return;
 		}
 	}
 	
+	/**
+	 * Adds a error simulating thread to the queue
+	 * @param operation, lose(1), delay(2) or duplicate(3)
+	 * @param packet, rrw, wrq, ack or data
+	 * @param position, position of packet
+	 * @param delay, amount to delay in ms
+	 */
 	public void addToQueue(int operation, int packet, int position, int delay) {
 		ErrorThread error = null;
-		switch(operation) {
+		switch (operation) {
 		case 1: // lost packet
 			error = new LostThread(packet, position);
 			break;
@@ -228,12 +224,30 @@ public class ErrorSimulator implements Runnable {
 		case 3: // duplication packet
 			error = new DuplicatedThread(packet, position, delay);
 			break;
-			
+
 		default:
 			System.out.println("Unknown thread.");
 			return;
 		}
 		nextThread.add(error);
+	}
+
+	/**
+	 * Prints help for console commands
+	 */
+	public void printHelp() {
+		System.out.println("TFTP Error Simulator");
+		System.out.println("<r> must be 'ack','data', 'wrq'. or 'rrq'");
+		System.out.println("<p> position of packet");
+		System.out.println("<d> delay in millisecounds");
+		System.out.println("The server and client timeout is " + Variables.packetTimeout + "ms");
+		System.out.println("\tCommands:");
+		System.out.println("\thelp					Prints this message");
+		System.out.println("\tverbose <on/off>			Turns verbose mode on or off");
+		System.out.println("\tquit					Exits the simulator");
+		System.out.println("\tdelay	<r> <p> <d>			Delays the specified packet by a number of ms");
+		System.out.println("\tdup	<r> <p> <d>			Sends a duplicate of the specified packet");
+		System.out.println("\tlose	<r> <p>				Loses the specified packet");
 	}
 
 }

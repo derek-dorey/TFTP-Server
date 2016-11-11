@@ -88,23 +88,27 @@ public class Server implements Runnable {
 				@Override
 				public void run() {
 					Scanner scan = new Scanner(System.in);
+					printHelp();
 					do {
-						System.out.println("Type '!quit' to shutdown server");
 						String s = scan.nextLine();
-						if ("!quit".equals(s)) {
+						if ("quit".equals(s)) {
 							scan.close();
 							closeThreads();
 							break;
-						} else {
-							switch (s.toLowerCase().trim()) {
-							case Variables.SET_VERBOSE_ON:
-								Variables.VERBOSE = true;
-								System.out.println("\nVerbose: [ON]\n");
-								break;
-							case Variables.SET_VERBOSE_OFF:
-								Variables.VERBOSE = false;
-								System.out.println("\nVerbose: [OFF]\n");
-								break;
+						} else if ("help".equals(s)) {
+							printHelp();
+						} else if (s.toLowerCase().contains("verbose")) {
+							try {
+								String setting = s.split(" ")[1].toLowerCase().trim();
+								if ("on".equals(setting)) {
+									Variables.VERBOSE = true;
+									System.out.println("\nVerbose: [ON]\n");
+								} else if ("off".equals(setting)) {
+									Variables.VERBOSE = false;
+									System.out.println("\nVerbose: [OFF]\n");
+								}
+							} catch (Exception e) {
+								continue;
 							}
 						}
 					} while (scan.hasNext());
@@ -131,6 +135,17 @@ public class Server implements Runnable {
 		}
 		Logger.log("Connections closed.");
 		receiveSocket.close();
+	}
+	
+	/**
+	 * Prints help for console commands
+	 */
+	public void printHelp() {
+		System.out.println("TFTP Server");
+		System.out.println("\tCommands:");
+		System.out.println("\thelp					Prints this message");
+		System.out.println("\tverbose <on/off>			Turns verbose mode on or off");
+		System.out.println("\tquit					Exits the server");
 	}
 
 	public static void main(String args[]) throws Exception {
