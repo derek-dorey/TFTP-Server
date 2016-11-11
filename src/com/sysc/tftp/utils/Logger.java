@@ -99,7 +99,10 @@ public class Logger {
 		int len = packet.getLength();
 		System.out.println("[" + threadId + "]: " + "Length: " + len);
 		System.out.println("[" + threadId + "]: " + "Containing: ");
-		System.out.println("\t" + Arrays.toString(packet.getData()));
+		
+		byte[] data = new byte[len];
+		System.arraycopy(packet.getData(), 0, data, 0, len);
+		System.out.println("\t" + Arrays.toString(data));
 	}
 
 	/**

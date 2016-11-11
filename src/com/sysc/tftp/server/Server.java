@@ -99,11 +99,11 @@ public class Server implements Runnable {
 							switch (s.toLowerCase().trim()) {
 							case Variables.SET_VERBOSE_ON:
 								Variables.VERBOSE = true;
-								System.out.println("\nVerbose: [ON].\n");
+								System.out.println("\nVerbose: [ON]\n");
 								break;
 							case Variables.SET_VERBOSE_OFF:
 								Variables.VERBOSE = false;
-								System.out.println("\nVerbose: [OFF].\n");
+								System.out.println("\nVerbose: [OFF]\n");
 								break;
 							}
 						}
@@ -118,7 +118,6 @@ public class Server implements Runnable {
 	 * Waits for all client threads to finish before closing them
 	 */
 	public void closeThreads() {
-		
 		Logger.log("Closing connections...");
 		thread.interrupt();
 		running = false;
