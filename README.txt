@@ -213,6 +213,9 @@ OTHER FILES
 
 6. Error Code *.jpeg
 	* All the timing diagrams from errors while reading or writing
+	
+7. Timeout - *.jpeg
+	* All the timing diagrams for timeout scenarios
 
 TERMINATION
 ============
