@@ -67,14 +67,36 @@ public class Client {
 	}
 
 	/**
+	 * Returns the packet to initiate a write request on a specified file
+	 * @throws UnknownHostException 
+	 */
+	private DatagramPacket createRequestPacket(String fileName, int requestType) throws UnknownHostException {
+		
+		byte[] requestMsg; // Message containing request being sent to the server
+		Variables.Mode run = Variables.CLIENT_MODE;
+		int sendPort; //Port to send initial request packet on
+		
+		// Generate byte array to send to server for request type and file
+		requestMsg = newRequest((byte) requestType, fileName);
+
+		// If normal run mode use port 69, port 23 otherwise
+		if (run == Variables.Mode.NORMAL)
+			sendPort = Variables.NORMAL_PORT;
+		else
+			sendPort = Variables.TEST_PORT;
+		
+		// Create new datagram packet to send
+		sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), sendPort);
+		
+		return sendPacket;
+		
+	}	
+	
+	/**
 	 * Receive a file from the server based on the supplied filename.
 	 */
 	public void receiveFile(String fileName) {
-		byte[] requestMsg; // Message containing request being sent to the
-							// server
-		int sendPort; // Port we are sending the packet to
 		int tid; // Random transfer ID generated
-		Variables.Mode run = Variables.CLIENT_MODE;
 		DatagramPacket sendPacket; // A packet to send request to server
 
 		// combine directory and filename to locate file
@@ -104,22 +126,12 @@ public class Client {
 			
 			//Specify the timeout for the socket
 			sendReceiveSocket.setSoTimeout(Variables.packetTimeout);
-			
-			// If normal run mode use port 69, port 23 otherwise
-			if (run == Variables.Mode.NORMAL) {
-				sendPort = Variables.NORMAL_PORT;
-			} else {
-				sendPort = Variables.TEST_PORT;
-			}
-
-			// Generate byte array to send to server for request type and file
-			requestMsg = newRequest((byte) 1, fileName);
 
 			// Start of Try/Catch
 			try {
 
 				// Create new datagram packet to send
-				sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), sendPort);
+				sendPacket = createRequestPacket(fileName, 1);
 
 				// Write packet outgoing to log
 				Logger.logRequestPacketSending(sendPacket);
@@ -163,6 +175,7 @@ public class Client {
 		byte[] packetData = new byte[Variables.MAX_PACKET_SIZE]; // Byte array for packet data
 		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size of data in data packet
 		int timeouts = 0;	//Number of timeouts which have occured
+		String fileName; 	//Filename of file being sent
 		
 		// Start of Try/Catch
 		try {
@@ -195,96 +208,72 @@ public class Client {
 					// Write packet outgoing to log
 					Logger.logPacketReceived(receivePacket);
 	
-					// Start of Try/Catch
-					try {
+					// Check if data packet
+					if (packetData[0] == 0 && packetData[1] == 3) {
+
+						// System.out.println(filePath);
+
+						// Reload the file
+						f = new File(filePath);
+
+						// Extract block # from incoming packet
+						currentBlockFromPacket = ((packetData[2] << 8) & 0xFF00) | (packetData[3] & 0xFF);
 						
-						// Check if data packet
-						if (packetData[0] == 0 && packetData[1] == 3) {
-	
-							// System.out.println(filePath);
-	
-							// Reload the file
-							f = new File(filePath);
-	
-							// Open new FileOutputStream to place file
-							//incoming = new FileOutputStream(f, true);
+						//If incoming block is the block we expected
+						if (currentBlockFromPacket == currentBlock ) {
 							
-							try {
-							
-								incoming = Files.newOutputStream(Paths.get(filePath), StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
-								
-							} catch (AccessDeniedException e) { 		//trying to write to directory without write permissions
-								System.out.println("Access Violation.");
-								break;
-							}
-	
-							// Extract block # from incoming packet
-							currentBlockFromPacket = ((packetData[2] << 8) & 0xFF00) | (packetData[3] & 0xFF);
-							
-							//If incoming block is the block we expected
-							if (currentBlockFromPacket == currentBlock ) {
-								
-								// Grab file data from data packet
-								fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
-										receivePacket.getLength());
-		
-								// Write packet data to the file
-								
-								try {
-									
-									incoming.write(fileData);	//throws FileAlreadyExistsException, IOException
-		
-									// Wait for data to be written to file before doing
-									// anything else
-									//incoming.getFD().sync();
-									
-									// Send ACK for received block back to server
-									sendACK(currentBlock, receivePacket.getPort());
-		
-									//Close file output stream
-									incoming.close();
-								
-								} catch (AccessDeniedException e) {  //tried to write to directory without write permissions
-									System.out.println("Access Violation.");
-									break;
-								} catch (FileAlreadyExistsException e2) {  		//tried to write a file that already exists
-									System.out.println("File Already Exists.");
-									break;
-								} catch (IOException e3) {						//insufficient disk space for the file transfer
-									System.out.println("Disk Full.");
-									break;
-								}
-								
-							//Received wrong data packet, re-send correct ACK
-							} else {
-								
-								Logger.log("Client: Received block #" + currentBlockFromPacket + ", Expected block #" + (currentBlock - 1) + " (resending ACK)");
-								
-								//Reduce block counter
-								currentBlock --;
-								
-								// Send ACK for previous received block
-								sendACK(currentBlock, receivePacket.getPort());
-								
-							}
-							
-						} else if (packetData[0] == 0 && packetData[1] == 5) {
-							// If an error code is received from server
-							// Invalid op code
-	
+							// Grab file data from data packet
 							fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
 									receivePacket.getLength());
 	
-							String errorMsg = new String(fileData, "UTF-8");
-							System.out.println(errorMsg);
+							// Write packet data to the file
+							try {
+								
+								//Open new output stream for data
+								incoming = Files.newOutputStream(Paths.get(filePath), StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
+
+								//Write the data to the file
+								incoming.write(fileData);	//throws FileAlreadyExistsException, IOException
+								
+								// Send ACK for received block back to server
+								sendACK(currentBlock, receivePacket.getPort());
+	
+								//Close file output stream
+								incoming.close();
+							
+							} catch (AccessDeniedException e) {  //tried to write to directory without write permissions
+								System.out.println("Access Violation.");
+								break;
+							} catch (FileAlreadyExistsException e2) {  		//tried to write a file that already exists
+								System.out.println("File Already Exists.");
+								break;
+							} catch (IOException e3) {						//insufficient disk space for the file transfer
+								System.out.println("Disk Full.");
+								break;
+							}
+							
+						//Received wrong data packet, re-send correct ACK
+						} else {
+							
+							Logger.log("Client: Received block #" + currentBlockFromPacket + ", Expected block #" + (currentBlock - 1) + " (resending ACK)");
+							
+							//Reduce block counter
+							currentBlock --;
+							
+							// Send ACK for previous received block
+							sendACK(currentBlock, receivePacket.getPort());
+							
 						}
 						
-					// Sync failed, we could not save the bytes
-					} catch (SyncFailedException e) {
-						// Output error and return
-						System.out.println("Could not save the full file! An error occured");
-						// incoming.close();
-						return;
+					} else if (packetData[0] == 0 && packetData[1] == 5) {
+						// If an error code is received from server
+						// Invalid op code
+
+						fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+								receivePacket.getLength());
+
+						String errorMsg = new String(fileData, "UTF-8");
+						System.out.println(errorMsg);
 					}
 				
 				//Timeout occured
@@ -305,15 +294,23 @@ public class Client {
 					//Reduce block counter
 					currentBlock --;
 					
+					//If it was the initial request packet we need to resend, format it
+					if (sendPacket == null) {
+						
+						//Get filename of file being sent
+						fileName = new File(filePath).getName();
+						
+						// Create write request packet
+						sendPacket = createRequestPacket(fileName, 1);
+						
+					} 
+					
 					// Send ACK for previous received block
 					sendACK(currentBlock, receivePacket.getPort());
 					
 				}
 
 			} while (!lastBlock(receivePacket));
-
-			// Close FileOutputStream
-			// incoming.close();
 
 			// End of Try/Catch
 		} catch (IOException e) {
@@ -340,11 +337,7 @@ public class Client {
 	 * Send a file to the server based on the supplied filename.
 	 */
 	public void sendFile(String fileName) {
-		byte[] requestMsg; // Message containing request being sent to the
-							// server
-		int sendPort; // Port we are sending the packet to
 		int tid; // Random transfer ID generated
-		Variables.Mode run = Variables.CLIENT_MODE;
 		DatagramPacket sendPacket; // A packet to send request to server
 		File f = new File(Variables.CLIENT_FILES_DIR + fileName); // File object for seeing if it already exists
 
@@ -364,20 +357,11 @@ public class Client {
 			// Open new datagram socket
 			sendReceiveSocket = new DatagramSocket(tid);
 
-			// If normal run mode use port 69, port 23 otherwise
-			if (run == Variables.Mode.NORMAL)
-				sendPort = Variables.NORMAL_PORT;
-			else
-				sendPort = Variables.TEST_PORT;
-
 			// Start of Try/Catch
 			try {
-
-				// Generate byte array to send to server for request type and file
-				requestMsg = newRequest((byte) 2, fileName);
-
-				// Create new datagram packet to send
-				sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), sendPort);
+				
+				// Create new datagram packet for write request
+				sendPacket = createRequestPacket(fileName, 2);
 
 				// Write packet outgoing to log
 				Logger.logRequestPacketSending(sendPacket);
@@ -418,7 +402,8 @@ public class Client {
 		int timeouts = 0;	//Number of timeouts which have occured
 		int currentBlockFromPacket = 0;	//Current block number from incoming packet
 		boolean lastBlock = false;
-
+		String fileName; 	//Filename of file being sent
+		
 		// Start of Try/Catch
 		try {
 
@@ -557,7 +542,7 @@ public class Client {
 					}
 					
 					//Log resending data packet
-					Logger.log("Resending data packet");
+					Logger.log("Resending packet");
 					
 					//Increment timeouts counter
 					timeouts ++;
@@ -565,6 +550,17 @@ public class Client {
 					//Reduce block counter
 					blockNumber --;
 
+					//If it was the initial request packet we need to resend, format it
+					if (sendPacket == null) {
+						
+						//Get filename of file being sent
+						fileName = new File(filePath).getName();
+						
+						// Create write request packet
+						sendPacket = createRequestPacket(fileName, 2);
+						
+					} 
+					
 					// Resend the last packet to the server
 					sendReceiveSocket.send(sendPacket);
 
