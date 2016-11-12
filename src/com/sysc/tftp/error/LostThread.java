@@ -9,17 +9,18 @@ import com.sysc.tftp.utils.Variables;
 
 public class LostThread extends ErrorThread {
 	
+	private int position;
+	private int packetType;
+	private boolean lostPacket;
 	
 	public LostThread(int packet, int position) {
-		// TODO
-		System.out.println("Lost!");
+		this.position = position;
+		this.packetType = packet;
+		this.lostPacket = false;
 	}
 	
 	@Override
 	public void run() {
-		System.out.println("Lost!");
-
-		
 		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
 
 		Logger.logRequestPacketSending(sendPacket);
@@ -54,52 +55,31 @@ public class LostThread extends ErrorThread {
 		while (true) {
 			// Construct a DatagramPacket for receiving packets up
 			// to 512 bytes long (the length of the byte array).
-			sendPacket = new DatagramPacket(data, receivePacket.getLength(), receivePacket.getAddress(),
-					clientPort);
-
-			Logger.logPacketSending(sendPacket);
-
-			// Send the datagram packet to the client via a new socket.
-			try {
-				sendReceiveSocket.send(sendPacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
+			if (receivePacket.getPort() == clientPort) {
+				sendPacket = new DatagramPacket(data, receivePacket.getLength(), receivePacket.getAddress(),
+						serverPort);
+			} else {
+				sendPacket = new DatagramPacket(data, receivePacket.getLength(), receivePacket.getAddress(),
+						clientPort);
 			}
 
-			Logger.log("Simulator: packet sent using port " + sendReceiveSocket.getLocalPort());
-			Logger.log("");
+			if (!lostPacket && isRequest(this.packetType, data) && isPosition(position, data)) {
+				Logger.log("Simulated packet lose");
+				lostPacket = true;
+			} else {
+				Logger.logPacketSending(sendPacket);
+				// Send the datagram packet to the client via a new socket.
+				try {
+					sendReceiveSocket.send(sendPacket);
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 
-			data = new byte[Variables.MAX_PACKET_SIZE];
-			receivePacket = new DatagramPacket(data, data.length);
-
-			Logger.log("Simulator: Waiting for packet.");
-			try {
-				// Block until a datagram is received via sendReceiveSocket.
-				sendReceiveSocket.receive(receivePacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
+				Logger.log("Simulator: packet sent using port " + sendReceiveSocket.getLocalPort());
+				Logger.log("");				
 			}
-
-			Logger.logPacketReceived(receivePacket);
-
-			sendPacket = new DatagramPacket(data, receivePacket.getLength(), receivePacket.getAddress(),
-					serverPort);
-
-			Logger.logPacketSending(sendPacket);
-
-			// Send the datagram packet to the client via a new socket.
-			try {
-				sendReceiveSocket.send(sendPacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-
-			Logger.log("Simulator: packet sent using port " + sendReceiveSocket.getLocalPort());
-			Logger.log("");
-
+			
 			data = new byte[Variables.MAX_PACKET_SIZE];
 			receivePacket = new DatagramPacket(data, data.length);
 
@@ -115,6 +95,4 @@ public class LostThread extends ErrorThread {
 			Logger.logPacketReceived(receivePacket);
 		}
 	}
-
-
 }
