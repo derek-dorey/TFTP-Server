@@ -427,6 +427,7 @@ public class Client {
 		int currentBlockFromPacket = 0;	//Current block number from incoming packet
 		boolean lastBlock = false;
 		String fileName; 	//Filename of file being sent
+		int highestACK = 0;	//Highest ACK'd block number
 		
 		// Start of Try/Catch
 		try {
@@ -477,8 +478,13 @@ public class Client {
 						// Extract block # from incoming packet
 						currentBlockFromPacket = ((incomingPacket[2] << 8) & 0xFF00) | (incomingPacket[3] & 0xFF);
 						
+						Logger.log( "Current blockNumber " + blockNumber);
+						
 						//Check if the correct block
 						if ( currentBlockFromPacket == (blockNumber - 1) ) {
+							
+							//Save highest ACK'd packet
+							highestACK = currentBlockFromPacket;
 							
 							// Read the next set of bytes
 							bytesRead = outgoing.read(outgoingData);
@@ -520,8 +526,29 @@ public class Client {
 						//Sorcerer's Apprentice Avoidance
 						} else {
 							
-							//Log ignore to logger
-							Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
+							Logger.log("Highest ACK : " + highestACK);
+							
+							//We should resend the last block because it was lost
+							if (currentBlockFromPacket == highestACK) {
+								
+								//Log that packet was lost
+								Logger.log("Looks like a data packet was lost, resending...");
+								
+								// Send the packet to the server
+								sendReceiveSocket.send(sendPacket);
+								
+								// Write packet outgoing to log
+								Logger.logPacketSending(sendPacket);	
+								
+								//Decrement block number 
+								blockNumber--;
+								
+							} else {
+							
+								//Log ignore to logger
+								Logger.log("Ignoring ACK with block number " + currentBlockFromPacket + ", we are passed this.");
+							
+							}
 							
 						}
 			
