@@ -14,6 +14,7 @@ public class DuplicatedThread extends ErrorThread {
 	private int delay;
 	private int position;
 	private int packetType;
+	private boolean duplicatedPacket;
 	
 	private DatagramPacket dupPacket;
 	
@@ -21,6 +22,7 @@ public class DuplicatedThread extends ErrorThread {
 		this.delay = delay;
 		this.position = position;
 		this.packetType = packet;
+		this.duplicatedPacket = false;
 	}
 	
 	@Override
@@ -77,11 +79,12 @@ public class DuplicatedThread extends ErrorThread {
 
 			Logger.logPacketSending(sendPacket);
 
-			if (isRequest(this.packetType, newData) && isPosition(position, newData)) {
+			if (!duplicatedPacket && isRequest(this.packetType, newData) && isPosition(position, newData)) {
 				byte[] dupData = new byte[receivePacket.getLength()];
 				System.arraycopy(newData, 0, dupData, 0, receivePacket.getLength());
 				dupPacket = new DatagramPacket(dupData, receivePacket.getLength(), receivePacket.getAddress(),
 						clientPort);
+				duplicatedPacket = true;
 				sendDuplicatePacket();
 			}
 			
