@@ -31,33 +31,43 @@ RESPONSIBILITIES
 Richard Hanton
 	Iteration 1:
 		- Client side
-
 	Iteration 2:
 		- Created the timing diagrams for error codes 1, 2, 3, and 6. 
 		- Created the UML diagram for the state of our project at iteration 2.
 		- Helped team members fix some small issues within client and server.
+	Iteration 3:
+		- Updating the client and server side to handle lost packets, delayed packets and duplicate packets
 
-Derek Dore
+Derek Dorey
 	Iteration 1:
 		- UCMs for client/server scenarios
-
 	Iteration 2:
 		- Server side error handling
+	Iteration 3:
+		- Fixing iteration 2 issues
+		- UML and timing diagrams
+		- Implementing delayed packets in the error simulator
 
 Lee  Fisher
 	Iteration 1:
 		- UMLs for all classes
-
 	Iteration 2:
 		- Client side error handling
+	Iteration 3:
+		- Fixing iteration 2 issues
+		- UML and timing diagrams
+		- Implementing lost packets in the error simulator
 
 Lexi Brown
 	Iteration 1:
 		- Server side and client interface
-
 	Iteration 2:
 		- Updating readme
 		- Fixing iteration 1 issues
+	Iteration 3:
+		- Updating readme
+		- Building error simulator console interface
+		- Implementing duplicate packets in the error simulator	
 
 ====================================================================================================
 ====================================================================================================
@@ -88,12 +98,19 @@ RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
 			* set mode test
 	Server:
 		While the server is running you can type in the following commands:
-			* set verbose on
-			* set verbose off
+			* verbose on
+			* verbose off
+			* help
+			* quit
 	ErrorSimulator:
 		While the ErrorSimulator is running you can type in the following commands:
-			* set verbose on
-			* set verbose off
+			* verbose on
+			* verbose off
+			* help
+			* quit
+			* delay <request> <position> <delay>
+			* dup <request> <position> <delay>
+			* lose <request> <position>
 
 IMPLEMENTATION DETAILS
 ======================
@@ -141,6 +158,33 @@ IMPLEMENTATION DETAILS
 	* Accept datagram packet from the socket and pass the received datagram to the server.
 	* Wait for server to send back response and then pass response to client
 	* Continues to pass data between client and server until file transfer is complete.
+
+6. ErrorThread.java
+	* Abstract class using for making error simulating threads
+	
+7. NormalThread.java
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+8. LostThread.java
+	* Loses a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+9. DelayThread.java
+	* Delays a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+10. DuplicateThread.java
+	* Duplicates a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
 
 OTHER FILES
 ===========
