@@ -80,14 +80,16 @@ public class Client {
 		requestMsg = newRequest((byte) requestType, fileName);
 
 		// If normal run mode use port 69, port 23 otherwise
-		if (run == Variables.Mode.NORMAL)
+		if (run == Variables.Mode.NORMAL) {
 			sendPort = Variables.NORMAL_PORT;
-		else
+		} else { 
 			sendPort = Variables.TEST_PORT;
+		}
 		
 		// Create new datagram packet to send
 		sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), sendPort);
 		
+		//Return request packet
 		return sendPacket;
 		
 	}	
@@ -106,13 +108,11 @@ public class Client {
 		File f = new File(filePath);
 
 		if (f.exists() && !f.isDirectory()) {
-			System.out.println("File already exists."); // if the file already
-														// exists in the client
-														// directory, do not
-														// send RRQ and
-														// re-prompt user input
-			return; // Note: do not send error code 6, rather terminate the
-					// request
+			System.out.println("File already exists."); // if the file already exists in the client directory, do not
+														// send RRQ and re-prompt user input
+			
+			// Note: do not send error code 6, rather terminate the request
+			return; 
 		}
 
 		// Start of Try/Catch
@@ -211,8 +211,6 @@ public class Client {
 					// Check if data packet
 					if (packetData[0] == 0 && packetData[1] == 3) {
 
-						// System.out.println(filePath);
-
 						// Reload the file
 						f = new File(filePath);
 
@@ -241,20 +239,39 @@ public class Client {
 								//Close file output stream
 								incoming.close();
 							
-							} catch (AccessDeniedException e) {  //tried to write to directory without write permissions
+							//Tried to write to directory without write permissions
+							} catch (AccessDeniedException e) {  
+								
+								//Print error message 
 								System.out.println("Access Violation.");
+								
+								//Exit save file data loop
 								break;
-							} catch (FileAlreadyExistsException e2) {  		//tried to write a file that already exists
+								
+							//Tried to write a file that already exists	
+							} catch (FileAlreadyExistsException e2) {  
+								
+								//Print error message
 								System.out.println("File Already Exists.");
+								
+								//Exit save file data loop
 								break;
-							} catch (IOException e3) {						//insufficient disk space for the file transfer
+								
+							//Insufficient disk space for the file transfer	
+							} catch (IOException e3) {	
+								
+								//Print error message
 								System.out.println("Disk Full.");
+								
+								//Exit save file data loop
 								break;
+								
 							}
 							
 						//Received wrong data packet, re-send correct ACK
 						} else {
 							
+							//Log wrong packet received
 							Logger.log("Client: Received block #" + currentBlockFromPacket + ", Expected block #" + (currentBlock - 1) + " (resending ACK)");
 							
 							//Reduce block counter
@@ -264,16 +281,20 @@ public class Client {
 							sendACK(currentBlock, receivePacket.getPort());
 							
 						}
-						
+					
+					//Error packet received from server
 					} else if (packetData[0] == 0 && packetData[1] == 5) {
-						// If an error code is received from server
-						// Invalid op code
 
+						//Get data from error packet
 						fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
 								receivePacket.getLength());
 
+						//Get error message from packet data 
 						String errorMsg = new String(fileData, "UTF-8");
+						
+						//Print the error out
 						System.out.println(errorMsg);
+						
 					}
 				
 				//Timeout occured
@@ -324,13 +345,18 @@ public class Client {
 	 * is the last packet for the file.
 	 */
 	public boolean lastBlock(DatagramPacket datagramPacket) {
-		// If datagram packet length is less than MAX_PACKET_SIZE it's the last
-		// block
+		
+		// If datagram packet length is less than MAX_PACKET_SIZE it's the last block
 		if (datagramPacket.getLength() < Variables.MAX_PACKET_SIZE) {
+			
+			//It is the last block
 			return true;
 		} else {
+			
+			//Not the last block
 			return false;
 		}
+		
 	}
 
 	/**
@@ -585,10 +611,8 @@ public class Client {
 	 * Send Acknowledgement to server saying we received the block.
 	 */
 	public void sendACK(int blockNumber, int tidServer) {
-		DatagramPacket sendPacket; // Acknowledgement packet being sent to the
-									// server
-		byte[] requestMsg = new byte[4]; // Message containing ack being sent to
-											// the server
+		DatagramPacket sendPacket; // Acknowledgement packet being sent to the server
+		byte[] requestMsg = new byte[4]; // Message containing ACK being sent to the server
 
 		// Start of Try/Catch
 		try {
@@ -608,7 +632,7 @@ public class Client {
 			// Write packet outgoing to log
 			Logger.logPacketSending(sendPacket);
 
-			// End of Try/Catch
+		// End of Try/Catch
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
