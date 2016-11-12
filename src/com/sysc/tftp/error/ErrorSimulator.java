@@ -217,12 +217,15 @@ public class ErrorSimulator implements Runnable {
 		switch (operation) {
 		case 1: // lost packet
 			error = new LostThread(packet, position);
+			System.out.println("Added LostThread to queue.");
 			break;
 		case 2: // delay packet
 			error = new DelayThread(packet, position);
+			System.out.println("Added DelayThread to queue.");
 			break;
 		case 3: // duplication packet
 			error = new DuplicatedThread(packet, position, delay);
+			System.out.println("Added DuplicatedThread to queue.");
 			break;
 
 		default:
