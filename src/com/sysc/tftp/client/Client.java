@@ -165,9 +165,7 @@ public class Client {
 	 * to the server for each packet received.
 	 */
 	private void saveFileData(String filePath) {
-		File f = new File(filePath); // File object for seeing if it already
-										// exists
-		//FileOutputStream incoming; // FileOutputStream for incoming data
+		File f = new File(filePath); // File object for seeing if it already exists
 		OutputStream incoming;
 		int currentBlock = 0; // Current block of data being received
 		int currentBlockFromPacket = 0; // Current block # from the packet
