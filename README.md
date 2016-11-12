@@ -46,7 +46,7 @@ RESPONSIBILITIES
 	Iteration 3:
 		- Fixing iteration 2 issues
 		- UML and timing diagrams
-		- Implementing delayed packets in the error simulator
+		- Testing and confirming duplicate, delayed and lost packets in the error simulator
 
 ###Lee  Fisher
 	Iteration 1:
@@ -56,7 +56,6 @@ RESPONSIBILITIES
 	Iteration 3:
 		- Fixing iteration 2 issues
 		- UML and timing diagrams
-		- Implementing lost packets in the error simulator
 
 ###Lexi Brown
 	Iteration 1:
@@ -67,7 +66,7 @@ RESPONSIBILITIES
 	Iteration 3:
 		- Updating readme
 		- Building error simulator console interface
-		- Implementing duplicate packets in the error simulator	
+		- Implementing duplicate, delayed and lost packets in the error simulator
 
 ====================================================================================================
 ====================================================================================================
@@ -213,6 +212,9 @@ OTHER FILES
 
 6. Error Code *.jpeg
 	* All the timing diagrams from errors while reading or writing
+
+7. Timeout - *.jpeg
+	* All the timing diagrams for timeout scenarios
 
 TERMINATION
 ============
