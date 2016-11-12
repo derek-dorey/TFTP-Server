@@ -189,7 +189,10 @@ public class ErrorSimulator implements Runnable {
 				}
 
 				if ("delay".equals(params[0])) {
-					if (requestType == 1 || requestType == 2) {
+					if (delay <= Variables.packetTimeout) {
+						System.out.println("Delay must be greater than timeout");
+						return;
+					} else if (requestType == 1 || requestType == 2) {
 						System.out.println("No point in delaying the init request");
 						return;
 					}
@@ -200,7 +203,6 @@ public class ErrorSimulator implements Runnable {
 			}
 		} catch (Exception e) {
 			System.out.println("Invalid command");
-			e.printStackTrace();
 			return;
 		}
 	}
@@ -220,7 +222,7 @@ public class ErrorSimulator implements Runnable {
 			System.out.println("Added LostThread to queue.");
 			break;
 		case 2: // delay packet
-			error = new DelayThread(packet, position);
+			error = new DelayThread(packet, position, delay);
 			System.out.println("Added DelayThread to queue.");
 			break;
 		case 3: // duplication packet
