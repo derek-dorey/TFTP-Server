@@ -2,8 +2,8 @@ package com.sysc.tftp.utils;
 
 public class Variables {
 
-	public static final int MAX_PACKET_SIZE = 512; // Maximum packet size in
-													// bytes
+	// Maximum packet size in bytes
+	public static final int MAX_PACKET_SIZE = 512;
 
 	public static enum Mode {
 		NORMAL("NORMAL"), TEST("TEST");
@@ -28,8 +28,6 @@ public class Variables {
 	public static final byte[] readResp = { 0, 1 };
 	public static final byte[] writeResp = { 0, 2 };
 
-	public static final byte[] READ = { 0, 3, 0, 1 };
-	public static final byte[] WRITE = { 0, 4, 0, 0 };
 	public static final byte[] DATA = { 0, 3, 0, 1 };
 	public static final byte[] ACK = { 0, 4, 0, 0 };
 
@@ -68,10 +66,7 @@ public class Variables {
 	public static final int ACK_DATA_SIZE = 4;
 
 	public static boolean VERBOSE = false;
-	public static final String VERBOSE_FLAG = "--v";
-
 	public static Mode CLIENT_MODE = Mode.NORMAL;
-	public static final String TEST_MODE_FLAG = "-t";
 
 	// settings commands
 	public static final String SET_VERBOSE_ON = "set verbose on";
