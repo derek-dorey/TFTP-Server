@@ -207,13 +207,16 @@ OTHER FILES
 4. text.txt
 	* A long file for the client to test reading large files
 
-5. UML.png
-	* The UML (Unified Modeling Language) for each class
+5. UMLpt1.JPG
+	* Part 1 of the UML (Unified Modeling Language) for each classes 
+	
+6. UMLpt2.JPG
+	* Part 2 of the UML (Unified Modeling Language) for each class
 
-6. Error Code *.jpeg
+7. Error Code *.jpeg
 	* All the timing diagrams from errors while reading or writing
 	
-7. Timeout - *.jpeg
+8. Timeout - *.jpeg
 	* All the timing diagrams for timeout scenarios
 
 TERMINATION
