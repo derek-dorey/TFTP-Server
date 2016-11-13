@@ -151,6 +151,55 @@ public class ErrorSimulator implements Runnable {
 	 * @param s, user command
 	 */
 	public void handleSim(String s) {
+		String input = s.toLowerCase().trim();
+		try {
+			switch(input.split(" ")[0]) {
+			case "delay":
+				handle(input);
+				break;
+			case "dup":
+				handle(input);
+				break;
+			case "lose":
+				handle(input);
+				break;
+			case "mode":
+				handleMode(input);
+				break;
+			case "opcode":
+				// TODO
+				break;
+			default:
+				System.out.println("Unsuported command.");
+				break;
+			}
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			return;
+		}
+	}
+	
+	public void handleMode(String s) {
+		try {
+			String params[] = s.toLowerCase().trim().split(" ");
+			if (params.length < 2) {
+				System.out.println("Invalid parameters");
+				return;
+			}
+			ErrorThread error = new ModeThread(params[1]);
+			System.out.println("Added ModeThread to queue.");
+			nextThread.add(error);
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			return;
+		}
+	}
+	
+	/**
+	 * Handles commands with parameters
+	 * @param s, user command
+	 */
+	public void handle(String s) {
 		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
 		String input = s.toLowerCase().trim();
 		try {
@@ -245,14 +294,17 @@ public class ErrorSimulator implements Runnable {
 		System.out.println("<r> must be 'ack','data', 'wrq'. or 'rrq'");
 		System.out.println("<p> position of packet");
 		System.out.println("<d> delay in millisecounds");
+		System.out.println("<m> mode to change to");
 		System.out.println("The server and client timeout is " + Variables.packetTimeout + "ms");
 		System.out.println("\tCommands:");
-		System.out.println("\thelp					Prints this message");
-		System.out.println("\tverbose <on/off>			Turns verbose mode on or off");
-		System.out.println("\tquit					Exits the simulator");
-		System.out.println("\tdelay	<r> <p> <d>			Delays the specified packet by a number of ms");
-		System.out.println("\tdup	<r> <p> <d>			Sends a duplicate of the specified packet");
-		System.out.println("\tlose	<r> <p>				Loses the specified packet");
+		System.out.println("\thelp						Prints this message");
+		System.out.println("\tverbose 	<on/off>			Turns verbose mode on or off");
+		System.out.println("\tquit						Exits the simulator");
+		System.out.println("\tmode		<m>				Change mode ");
+		System.out.println("\topcode		<r> <p> <r>			Change opcode of specified packet");
+		System.out.println("\tdelay		<r> <p> <d>			Delays the specified packet by a number of ms");
+		System.out.println("\tdup		<r> <p> <d>			Sends a duplicate of the specified packet");
+		System.out.println("\tlose		<r> <p>				Loses the specified packet");
 	}
 
 }

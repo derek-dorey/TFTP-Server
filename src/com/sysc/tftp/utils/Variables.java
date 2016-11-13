@@ -1,5 +1,7 @@
 package com.sysc.tftp.utils;
 
+import java.net.InetAddress;
+
 public class Variables {
 
 	// Maximum packet size in bytes
@@ -68,12 +70,7 @@ public class Variables {
 	public static boolean VERBOSE = false;
 	public static Mode CLIENT_MODE = Mode.NORMAL;
 
-	// settings commands
-	public static final String SET_VERBOSE_ON = "set verbose on";
-	public static final String SET_VERBOSE_OFF = "set verbose off";
-	
-	public static final String SET_MODE_TEST = "set mode test";
-	public static final String SET_MODE_NORMAL = "set mode normal";
+	public static InetAddress serverIP = null;
 	
 	// packet timeout in ms 
 	public static final int packetTimeout = 2000;

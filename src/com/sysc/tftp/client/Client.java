@@ -87,7 +87,7 @@ public class Client {
 		}
 		
 		// Create new datagram packet to send
-		sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), sendPort);
+		sendPacket = new DatagramPacket(requestMsg, requestMsg.length, Variables.serverIP, sendPort);
 		
 		//Return request packet
 		return sendPacket;
@@ -514,7 +514,7 @@ public class Client {
 							System.arraycopy(dataSection, 0, data, 4, dataSection.length);
 		
 							// Create new datagram packet to send
-							sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(),
+							sendPacket = new DatagramPacket(data, data.length, Variables.serverIP,
 									receivePacket.getPort());
 		
 							// Send the packet to the server
@@ -649,7 +649,7 @@ public class Client {
 			requestMsg[3] = (byte) blockNumber;
 
 			// Create new datagram packet to send
-			sendPacket = new DatagramPacket(requestMsg, requestMsg.length, InetAddress.getLocalHost(), tidServer);
+			sendPacket = new DatagramPacket(requestMsg, requestMsg.length, Variables.serverIP, tidServer);
 
 			// Send the packet to the server
 			sendReceiveSocket.send(sendPacket);
