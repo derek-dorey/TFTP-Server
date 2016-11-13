@@ -16,8 +16,6 @@ public class DuplicatedThread extends ErrorThread {
 	private int packetType;
 	private boolean duplicatedPacket;
 	
-	private DatagramPacket dupPacket;
-	
 	public DuplicatedThread(int packet, int position, int delay) {
 		this.delay = delay;
 		this.position = position;
@@ -62,8 +60,7 @@ public class DuplicatedThread extends ErrorThread {
 		if (isRequest(this.packetType, data)) {
 			byte[] dupData = new byte[len];
 			System.arraycopy(data, 0, dupData, 0, len);
-			dupPacket = new DatagramPacket(dupData, len, clientIP, serverPort);
-			sendDuplicatePacket();
+			sendDuplicatePacket(new DatagramPacket(dupData, len, clientIP, serverPort));
 		}
 		
 		while (true) {
@@ -80,12 +77,8 @@ public class DuplicatedThread extends ErrorThread {
 			Logger.logPacketSending(sendPacket);
 
 			if (!duplicatedPacket && isRequest(this.packetType, newData) && isPosition(position, newData)) {
-				byte[] dupData = new byte[receivePacket.getLength()];
-				System.arraycopy(newData, 0, dupData, 0, receivePacket.getLength());
-				dupPacket = new DatagramPacket(dupData, receivePacket.getLength(), receivePacket.getAddress(),
-						clientPort);
 				duplicatedPacket = true;
-				sendDuplicatePacket();
+				sendDuplicatePacket(sendPacket);
 			}
 			
 			// Send the datagram packet to the client via a new socket.
@@ -115,7 +108,7 @@ public class DuplicatedThread extends ErrorThread {
 		}
 	}
 	
-	private void sendDuplicatePacket() {
+	private void sendDuplicatePacket(DatagramPacket sendPacket) {
 		Thread t = new Thread(new Runnable() {
 			
 			@Override
@@ -124,11 +117,11 @@ public class DuplicatedThread extends ErrorThread {
 					Thread.sleep(delay);
 					Logger.log("Sending duplicate packet.");
 					if (packetType == 1 || packetType == 2) {
-						Logger.logRequestPacketSending(dupPacket);
+						Logger.logRequestPacketSending(sendPacket);
 					} else {
-						Logger.logPacketSending(dupPacket);						
+						Logger.logPacketSending(sendPacket);						
 					}
-					sendReceiveSocket.send(dupPacket);
+					sendReceiveSocket.send(sendPacket);
 					Logger.log("Duplicate packet sent.");
 					Logger.log("Simulator: packet sent using port " + sendReceiveSocket.getLocalPort());
 					Logger.log("");
