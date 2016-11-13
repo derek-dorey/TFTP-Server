@@ -540,15 +540,15 @@ public class Client {
 								// Write packet outgoing to log
 								Logger.logPacketSending(sendPacket);	
 								
-								//Decrement block number 
-								blockNumber--;
-								
 							} else {
 							
 								//Log ignore to logger
 								Logger.log("Ignoring ACK with block number " + currentBlockFromPacket + ", we are passed this.");
 							
 							}
+							
+							//Decrement block number 
+							blockNumber--;							
 							
 						}
 			
