@@ -268,6 +268,8 @@ public class ClientConnection implements Runnable {
 					//Log ignore to logger
 					Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
 					
+					//Continue to next received packet
+					continue;
 				}
 				
 			//If write request
@@ -293,6 +295,12 @@ public class ClientConnection implements Runnable {
 				//Timeout receiving ACK on other end must have occured
 				} else {
 					
+					//Log that we received unknown packet
+					Logger.log("Unexpected packet received, ignoring...");
+					
+					//continue to next packet received
+					continue;
+					
 					//If we get here we received a data block from the past that may have been delayed / re-transmitted
 					//We ignore it, and by not doing anything the last ACK we sent will be re-sent back bellow, so
 					//hopefully we will now get the correct data block back, or if the correct data block is already
@@ -300,6 +308,7 @@ public class ClientConnection implements Runnable {
 					
 					
 				}
+				
 			}
 
 			//Create new response packet 
