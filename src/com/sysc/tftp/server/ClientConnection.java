@@ -20,6 +20,7 @@ import java.util.Arrays;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 import com.sysc.tftp.utils.Variables.Request;
+import com.sysc.tftp.utils.VerifyUtil;
 
 public class ClientConnection implements Runnable {
 
@@ -57,11 +58,11 @@ public class ClientConnection implements Runnable {
 		int currentBlockFromPacket = 0;	//Current block number from incoming packet
 		
 		//Verify incoming request type
-		Request req = verifyRequest(data);
+		Request req = VerifyUtil.verifyRequest(data, len);
 		
 		if (req == null || req == Request.ERROR) {
 			// TODO
-			// issue (iteration 2)
+			// issue (iteration 4) error code 4
 		}
 
 		filename = Variables.SERVER_FILES_DIR + pullFilename(data);
@@ -508,64 +509,6 @@ public class ClientConnection implements Runnable {
 		
 		//Valid block
 		return true;
-	}
-
-	/**
-	 * Verifies that the request is valid
-	 * 
-	 * @param data
-	 *            Request sent
-	 * @return Enum of type of request
-	 */
-	public Request verifyRequest(byte[] data) {
-		Request req; // READ, WRITE or ERROR
-		int j = 0, k = 0;
-
-		if (data[0] != 0) {
-			return Request.ERROR; // bad
-		} else if (data[1] == 1) {
-			req = Request.RRQ; // could be read
-		} else if (data[1] == 2) {
-			req = Request.WRQ; // could be write
-		} else {
-			return Request.ERROR; // bad
-		}
-
-		if (req != Request.ERROR) { // check for filename
-			// search for next all 0 byte
-			for (j = 2; j < len; j++) {
-				if (data[j] == 0) {
-					break;
-				}
-			}
-			if (j == len) {
-				return Request.ERROR; // didn't find a 0 byte
-			}
-			if (j == 2) {
-				return Request.ERROR; // filename is 0 bytes long
-			}
-		}
-
-		if (req != Request.ERROR) { // check for mode
-			// search for next all 0 byte
-			for (k = j + 1; k < len; k++) {
-				if (data[k] == 0) {
-					break;
-				}
-			}
-			if (k == len) {
-				return Request.ERROR; // didn't find a 0 byte
-			}
-			if (k == j + 1) {
-				return Request.ERROR; // mode is 0 bytes long
-			}
-		}
-
-		if (k != len - 1) {
-			return Request.ERROR; // other stuff at end of packet
-		}
-
-		return req;
 	}
 
 	/**
