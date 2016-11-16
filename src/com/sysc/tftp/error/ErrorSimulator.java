@@ -169,6 +169,9 @@ public class ErrorSimulator implements Runnable {
 			case "opcode":
 				// TODO
 				break;
+			case "tid":
+				handleTID(input);
+				break;
 			default:
 				System.out.println("Unsuported command.");
 				break;
@@ -188,6 +191,27 @@ public class ErrorSimulator implements Runnable {
 			}
 			ErrorThread error = new ModeThread(params[1]);
 			System.out.println("Added ModeThread to queue.");
+			nextThread.add(error);
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			return;
+		}
+	}
+	
+	public void handleTID(String s) {
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		try {
+			String params[] = s.toLowerCase().trim().split(" ");
+			if (params.length < 3) {
+				System.out.println("Invalid parameters");
+				return;
+			} else if (!requests.contains(params[1])) {
+				System.out.println("Invalid request type");
+				return;
+			}
+			int requestType = requests.indexOf(params[1]) + 1;
+			TIDThread error = new TIDThread(requestType, Integer.valueOf(params[2]));
+			System.out.println("Added TIDThread to queue.");
 			nextThread.add(error);
 		} catch (Exception e) {
 			System.out.println("Invalid command");
@@ -278,7 +302,6 @@ public class ErrorSimulator implements Runnable {
 			error = new DuplicatedThread(packet, position, delay);
 			System.out.println("Added DuplicatedThread to queue.");
 			break;
-
 		default:
 			System.out.println("Unknown thread.");
 			return;
@@ -302,6 +325,7 @@ public class ErrorSimulator implements Runnable {
 		System.out.println("\tquit						Exits the simulator");
 		System.out.println("\tmode		<m>				Change mode ");
 		System.out.println("\topcode		<r> <p> <r>			Change opcode of specified packet");
+		System.out.println("\ttid		<r> <p>				Change the TID of specified packet");
 		System.out.println("\tdelay		<r> <p> <d>			Delays the specified packet by a number of ms");
 		System.out.println("\tdup		<r> <p> <d>			Sends a duplicate of the specified packet");
 		System.out.println("\tlose		<r> <p>				Loses the specified packet");
