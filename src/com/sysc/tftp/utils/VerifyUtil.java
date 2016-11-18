@@ -12,75 +12,99 @@ public class VerifyUtil {
 	 * @return Enum of type of request
 	 */
 	public static Request verifyRequest(byte[] data, int len) {
-		Request req; // READ, WRITE or ERROR
-		int j = 0, k = 0;
+		
+		Request req; // Request type from packet
+		int j = 0, k = 0;	//Used for positions within the packet 
 
+		//Check first byte, must be 0	
 		if (data[0] != 0) {
-			return Request.ERROR; // bad
+			
+			//Invalid request type
+			return Request.ERROR;
+		
+		//Check second byte, is it read?
 		} else if (data[1] == 1) {
-			req = Request.RRQ; // could be read
+			
+			//Read request detected
+			req = Request.RRQ;
+		
+		//Check second byte, is it write?
 		} else if (data[1] == 2) {
-			req = Request.WRQ; // could be write
+			
+			//Write request detected
+			req = Request.WRQ;
+			
+		//Check second byte, is it data?
+		} else if (data[1] == 3) {
+			
+			//Read request detected
+			req = Request.DATA;
+		
+		//Check second byte, is it ACK?
+		} else if (data[1] == 4) {
+			
+			//Write request detected
+			req = Request.ACK;
+			
+		//Unknown request type
 		} else {
-			return Request.ERROR; // bad
+			
+			//Return unknown request
+			return Request.ERROR;
 		}
 
-		if (req != Request.ERROR) { // check for filename
+		//If read or write request, verify filename and mode
+		if (req == Request.RRQ || req == Request.WRQ) {
+			
 			// search for next all 0 byte
 			for (j = 2; j < len; j++) {
 				if (data[j] == 0) {
 					break;
 				}
 			}
+			
+			//Check if we went to end of string without 0 byte
 			if (j == len) {
-				return Request.ERROR; // didn't find a 0 byte
+				
+				//No zero byte found, not right format
+				return Request.ERROR;
 			}
+			
+			//If we didn't loop at all
 			if (j == 2) {
-				return Request.ERROR; // filename is 0 bytes long
+				
+				//No filename specified
+				return Request.ERROR;
 			}
-		}
-
-		if (req != Request.ERROR) { // check for mode
-			// search for next all 0 byte
+			
+			
+			//Loop until next zero byte to get the mode
 			for (k = j + 1; k < len; k++) {
 				if (data[k] == 0) {
 					break;
 				}
 			}
-			// TODO verify mode is default mode: octet (currently)
 			
+			//If we didn't end on a zero byte not formatted right
 			if (k == len) {
-				return Request.ERROR; // didn't find a 0 byte
+				
+				//Not valid request
+				return Request.ERROR;
 			}
+			
+			//If we didn't get anywhere looping for mode, its not specified
 			if (k == j + 1) {
-				return Request.ERROR; // mode is 0 bytes long
+				
+				//Not a valid request
+				return Request.ERROR;
+				
 			}
+									
 		}
 
-		if (k != len - 1) {
-			return Request.ERROR; // other stuff at end of packet
-		}
-
+		//Return the request type we got from the packet
 		return req;
-	}
-	
-	public static Request verifyPacket(byte[] data) {
-		Request req; // ACK, DATA or ERROR
-		if (data[0] != 0) {
-			return Request.ERROR; // bad
-		} else if (data[1] == 3) {
-			req = Request.DATA; // could be data
-		} else if (data[1] == 4) {
-			req = Request.ACK; // could be ack
-		} else {
-			return Request.ERROR; // bad
-		}
 		
-		// TODO
-		// other checks
-		// should we check block number here aswell?
-		
-		return req;
 	}
 	
 }
