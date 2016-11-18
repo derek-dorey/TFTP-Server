@@ -36,6 +36,8 @@ public class Variables {
 	public static final byte[] ERROR_1 = { 0, 5, 0, 1 }; // file not found
 	public static final byte[] ERROR_2 = { 0, 5, 0, 2 }; // access violation
 	public static final byte[] ERROR_3 = { 0, 5, 0, 3 }; // disk full
+	public static final byte[] ERROR_4 = { 0, 5, 0, 4 }; // Illegal TFTP operation (corrupt / wrong packet)
+	public static final byte[] ERROR_5 = { 0, 5, 0, 5 }; // Unknown transfer ID (wrong port)	
 	public static final byte[] ERROR_6 = { 0, 5, 0, 6 }; // file already exists
 	
 	// port numbers
