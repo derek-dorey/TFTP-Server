@@ -270,7 +270,7 @@ public class ClientConnection implements Runnable {
 				//Log packet received from bad source
 				Logger.log("Received packet from unknown source port...");
 				
-				// Form the error message response
+				// Form the error message response, not set error flag because we want to continue
 				response = packageError(Variables.ERROR_5);		
 			
 			//Packet is from the correct source!

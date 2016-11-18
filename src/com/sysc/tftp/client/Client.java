@@ -330,6 +330,17 @@ public class Client {
 						//Print the error out
 						System.out.println(errorMsg);
 						
+						//We terminate for any error code other than 5
+						if (packetData[3] != 5) {
+							
+							//Log termination
+							Logger.log("Terminating because we received error code " + packetData[3] + " from server");
+							
+							//Break
+							break;
+							
+						}
+						
 					}
 				
 				//Timeout occured
