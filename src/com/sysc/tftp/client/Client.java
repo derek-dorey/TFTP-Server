@@ -14,6 +14,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
+import com.sysc.tftp.utils.Variables.Request;
+import com.sysc.tftp.utils.VerifyUtil;
 
 public class Client {
 
@@ -174,6 +176,7 @@ public class Client {
 		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size of data in data packet
 		int timeouts = 0;	//Number of timeouts which have occured
 		String fileName; 	//Filename of file being sent
+		int fromPort = 0;	//Port we are receiving packets from
 		
 		// Start of Try/Catch
 		try {
@@ -200,12 +203,43 @@ public class Client {
 					// Receive an incoming packet
 					sendReceiveSocket.receive(receivePacket);
 					
-					//Reset timeout counter
-					timeouts = 0;
-					
 					// Write packet outgoing to log
-					Logger.logPacketReceived(receivePacket);
-	
+					Logger.logPacketReceived(receivePacket);		
+					
+					//If we havn't set the port we're receiving from yet
+					if (fromPort == 0) {
+						
+						//Set from port as port we are receiving first packet from
+						fromPort = receivePacket.getPort();
+						
+					}
+					
+					//Check incoming packet port with port we are use to receiving from
+					if (fromPort != receivePacket.getPort()) {
+						
+						//Log packet received from bad source
+						Logger.log("Received packet from unknown source port...");
+						
+						//If ports don't match up, skip this packet
+						continue;
+						
+					}
+					
+					//Check incoming packet is formatted properly
+					if (VerifyUtil.verifyRequest(packetData, packetData.length) != Request.DATA 
+							&& VerifyUtil.verifyRequest(packetData, packetData.length) != Request.ERROR) {
+						
+						//Not the right request, break
+						System.out.println("Invalid incoming request recevied, terminating.");
+						
+						//Exit file save loop
+						break;
+					
+					}
+					
+					//Reset timeout counter
+					timeouts = 0;	
+					
 					// Check if data packet
 					if (packetData[0] == 0 && packetData[1] == 3) {
 
@@ -428,6 +462,7 @@ public class Client {
 		boolean lastBlock = false;
 		String fileName; 	//Filename of file being sent
 		int highestACK = 0;	//Highest ACK'd block number
+		int  fromPort = 0;	//Port we are receiving data from on server
 		
 		// Start of Try/Catch
 		try {
@@ -453,13 +488,43 @@ public class Client {
 				
 					// Block until a datagram is received via sendReceiveSocket.
 					sendReceiveSocket.receive(receivePacket);
-	
-					//Reset timeout counter
-					timeouts = 0;
-					
+
 					// Write packet incoming to log
 					Logger.logPacketReceived(receivePacket);
 	
+					//If we havn't set the port we're receiving from yet
+					if (fromPort == 0) {
+						
+						//Set from port as port we are receiving first packet from
+						fromPort = receivePacket.getPort();
+						
+					}
+					
+					//Check incoming packet port with port we are use to receiving from
+					if (fromPort != receivePacket.getPort()) {
+						
+						//Log packet received from unknown source
+						Logger.log("Received packet from unknown source port");
+						
+						//If ports don't match up, skip this packet
+						continue;
+						
+					}
+					
+					//Check incoming packet is formatted properly
+					if (VerifyUtil.verifyRequest(incomingPacket, incomingPacket.length) != Request.ACK) {
+						
+						//Not the right request, break
+						System.out.println("Invalid incoming request recevied, terminating.");
+						
+						//Exit file save loop
+						break;
+					
+					}
+					
+					//Reset timeout counter
+					timeouts = 0;
+						
 					// If it was an ACK response, WE SHOULD ALSO CHECK BLOCK NUMBER
 					// IN ACK TO MAKE SURE WE'RE SENDING THE RIGHT DATA
 	
