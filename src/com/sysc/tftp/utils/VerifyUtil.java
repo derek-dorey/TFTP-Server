@@ -8,7 +8,7 @@ public class VerifyUtil {
 	 * Verifies that the request is valid
 	 * 
 	 * @param data
-	 *            Request sent
+	 * 
 	 * @return Enum of type of request
 	 */
 	public static Request verifyRequest(byte[] data, int len) {
@@ -20,7 +20,7 @@ public class VerifyUtil {
 		if (data[0] != 0) {
 			
 			//Invalid request type
-			return Request.ERROR;
+			return null;
 		
 		//Check second byte, is it read?
 		} else if (data[1] == 1) {
@@ -45,12 +45,18 @@ public class VerifyUtil {
 			
 			//Write request detected
 			req = Request.ACK;
+	
+		//Check second byte, is it ERROR?
+		} else if (data[1] == 5) {
 			
+			//Write request detected
+			req = Request.ERROR;
+				
 		//Unknown request type
 		} else {
 			
 			//Return unknown request
-			return Request.ERROR;
+			return null;
 		}
 
 		//If read or write request, verify filename and mode
@@ -67,14 +73,14 @@ public class VerifyUtil {
 			if (j == len) {
 				
 				//No zero byte found, not right format
-				return Request.ERROR;
+				return null;
 			}
 			
 			//If we didn't loop at all
 			if (j == 2) {
 				
 				//No filename specified
-				return Request.ERROR;
+				return null;
 			}
 			
 			
@@ -89,14 +95,14 @@ public class VerifyUtil {
 			if (k == len) {
 				
 				//Not valid request
-				return Request.ERROR;
+				return null;
 			}
 			
 			//If we didn't get anywhere looping for mode, its not specified
 			if (k == j + 1) {
 				
 				//Not a valid request
-				return Request.ERROR;
+				return null;
 				
 			}
 									
