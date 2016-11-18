@@ -212,6 +212,9 @@ public class Client {
 						//Set from port as port we are receiving first packet from
 						fromPort = receivePacket.getPort();
 						
+						//Log the from port 
+						Logger.log("We are receiving from port " + fromPort);	
+						
 					}
 					
 					//Check incoming packet port with port we are use to receiving from

@@ -38,13 +38,14 @@ public class ClientConnection implements Runnable {
 
 	private boolean errorDetected = false; 	// flag set when error detected,
 											// signals closing thread
-
+	
 	public ClientConnection(byte[] data, int len, InetAddress ip, int port) {
 		this.data = data;
 		this.len = len;
 		this.clientIP = ip;
 		this.clientPort = port;
 		this.blockNumber = 0;
+		
 	}
 
 	/**
@@ -56,6 +57,7 @@ public class ClientConnection implements Runnable {
 		String filename = null;
 		int timeouts = 0;				//Counter for timeouts
 		int currentBlockFromPacket = 0;	//Current block number from incoming packet
+		int fromPort = 0;				//Port we are receiving from
 		
 		//Verify incoming request type
 		Request req = VerifyUtil.verifyRequest(data, len);
@@ -251,67 +253,103 @@ public class ClientConnection implements Runnable {
 			// Process the received datagram.
 			Logger.logPacketReceived(receivePacket);
 
-			//Get block number from packet
-			currentBlockFromPacket = ((received[2] << 8) & 0xFF00) | (received[3] & 0xFF);
-
-			//If read request
-			if (req == Request.RRQ) {
+			//If we havn't set the port we're receiving from yet
+			if (fromPort == 0) {
 				
-				//Verify incoming data is an ACK
-				if (verifyACK(received)) {
-					
-					//Generate appropriate response
-					response = packageRead();
+				//Set from port as port we are receiving first packet from
+				fromPort = receivePacket.getPort();
 				
-				//Sorcerer's Apprentice Avoidance
-				} else {
-
-					//Log ignore to logger
-					Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
-					
-					//Continue to next received packet
-					continue;
-				}
-				
-			//If write request
-			} else if (req == Request.WRQ) {
-				
-				//Very the incoming data
-				if (verifyDATA(received)) {
-					
-					//Start of Try/Catch
-					try {
-						
-						//Write data to file 
-						response = writeToFile(filename,
-								Arrays.copyOfRange(received, Variables.DATA.length, received.length));
-					
-					//Error writting to file
-					} catch (Throwable e) {
-						
-						e.printStackTrace();
-						
-					}
-				
-				//Timeout receiving ACK on other end must have occured
-				} else {
-					
-					//Log that we received unknown packet
-					Logger.log("Unexpected packet received, ignoring...");
-					
-					//continue to next packet received
-					continue;
-					
-					//If we get here we received a data block from the past that may have been delayed / re-transmitted
-					//We ignore it, and by not doing anything the last ACK we sent will be re-sent back bellow, so
-					//hopefully we will now get the correct data block back, or if the correct data block is already
-					//on its way here this ACK will be ignored by the client.
-					
-					
-				}
+				//Log the from port 
+				Logger.log("We are receiving from port " + fromPort);				
 				
 			}
+			
+			//Check incoming packet port with port we are use to receiving from
+			if (fromPort != receivePacket.getPort()) {
+				
+				//Log packet received from bad source
+				Logger.log("Received packet from unknown source port...");
+				
+				// Form the error message response
+				response = packageError(Variables.ERROR_5);		
+			
+			//Packet is from the correct source!
+			} else {
+			
+				//Get block number from packet
+				currentBlockFromPacket = ((received[2] << 8) & 0xFF00) | (received[3] & 0xFF);
+	
+				//If read request
+				if (req == Request.RRQ) {
+					
+					//Verify the incoming packet is an ACK, we dont want anything else
+					if (VerifyUtil.verifyRequest(received, received.length) != Request.ACK) {
+						
+						// Form the error message response
+						response = packageError(Variables.ERROR_4);
+						
+						// Set error detected flag
+						errorDetected = true;
+						
+					}
+							
+					//Verify incoming data is an ACK
+					if (verifyACK(received)) {
+						
+						//Generate appropriate response
+						response = packageRead();
+					
+					//Sorcerer's Apprentice Avoidance
+					} else {
+	
+						//Log ignore to logger
+						Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
+						
+						//Continue to next received packet
+						continue;
+					}
+					
+				//If write request
+				} else if (req == Request.WRQ) {
+					
+					//Very the incoming data
+					if (verifyDATA(received)) {
+						
+						//Start of Try/Catch
+						try {
+							
+							//Write data to file 
+							response = writeToFile(filename,
+									Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+						
+						//Error writting to file
+						} catch (Throwable e) {
+							
+							e.printStackTrace();
+							
+						}
+					
+					//Timeout receiving ACK on other end must have occured
+					} else {
+						
+						//Log that we received unknown packet
+						Logger.log("Unexpected packet received, ignoring...");
+						
+						//continue to next packet received
+						continue;
+						
+						//If we get here we received a data block from the past that may have been delayed / re-transmitted
+						//We ignore it, and by not doing anything the last ACK we sent will be re-sent back bellow, so
+						//hopefully we will now get the correct data block back, or if the correct data block is already
+						//on its way here this ACK will be ignored by the client.
+						
+						
+					}
+					
+				}
 
+			}
+			
 			//Create new response packet 
 			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
 			
