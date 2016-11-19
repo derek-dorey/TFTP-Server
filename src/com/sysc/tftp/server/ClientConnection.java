@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -58,7 +59,9 @@ public class ClientConnection implements Runnable {
 		int timeouts = 0;				//Counter for timeouts
 		int currentBlockFromPacket = 0;	//Current block number from incoming packet
 		int fromPort = 0;				//Port we are receiving from
-		
+		Request incomingRequestType = null;	//Request type extracted from incoming packet
+		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size of data in data packet
+
 		//Verify incoming request type
 		Request req = VerifyUtil.verifyRequest(data, len);
 		
@@ -276,6 +279,48 @@ public class ClientConnection implements Runnable {
 			//Packet is from the correct source!
 			} else {
 			
+				incomingRequestType = VerifyUtil.verifyRequest(received,  received.length);
+				
+				//Received error packet
+				if (incomingRequestType == Request.ERROR) {
+					
+					//Get data from error packet
+					fileData = Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+							receivePacket.getLength());
+
+					//Get error message from packet data 
+					String errorMsg = "";
+					
+					//Start of Try/Catch
+					try {
+						
+						//Extract error message
+						errorMsg = new String(fileData, "UTF-8");
+						
+					//Caught exception
+					} catch (UnsupportedEncodingException e) {
+						
+						//Print exception
+						e.printStackTrace();
+						
+					}
+					
+					//Print the error out
+					System.out.println(errorMsg);
+					
+					//We terminate for any error code other than 5
+					if (received[3] != 5) {
+						
+						//Log termination
+						Logger.log("Terminating because we received error code " + received[3] + " from server");
+						
+						//Break
+						break;
+						
+					}
+					
+				}
+				
 				//Get block number from packet
 				currentBlockFromPacket = ((received[2] << 8) & 0xFF00) | (received[3] & 0xFF);
 	
@@ -283,7 +328,7 @@ public class ClientConnection implements Runnable {
 				if (req == Request.RRQ) {
 					
 					//Verify the incoming packet is an ACK, we dont want anything else
-					if (VerifyUtil.verifyRequest(received, received.length) != Request.ACK) {
+					if (incomingRequestType != Request.ACK) {
 						
 						// Form the error message response
 						response = packageError(Variables.ERROR_4);
@@ -291,60 +336,80 @@ public class ClientConnection implements Runnable {
 						// Set error detected flag
 						errorDetected = true;
 						
+					//Incoming packet is an ACK!
+					} else {
+						
+						//Verify incoming ACK
+						if (verifyACK(received)) {
+							
+							//Generate appropriate response
+							response = packageRead();
+						
+						//Sorcerer's Apprentice Avoidance
+						} else {
+		
+							//Log ignore to logger
+							Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
+							
+							//Continue to next received packet
+							continue;
+						}
+						
+						
 					}
 							
-					//Verify incoming data is an ACK
-					if (verifyACK(received)) {
-						
-						//Generate appropriate response
-						response = packageRead();
-					
-					//Sorcerer's Apprentice Avoidance
-					} else {
-	
-						//Log ignore to logger
-						Logger.log("Ignoring ACK with block number " + currentBlockFromPacket);
-						
-						//Continue to next received packet
-						continue;
-					}
-					
 				//If write request
 				} else if (req == Request.WRQ) {
 					
-					//Very the incoming data
-					if (verifyDATA(received)) {
-						
-						//Start of Try/Catch
-						try {
-							
-							//Write data to file 
-							response = writeToFile(filename,
-									Arrays.copyOfRange(received, Variables.DATA.length, received.length));
-						
-						//Error writting to file
-						} catch (Throwable e) {
-							
-							e.printStackTrace();
-							
-						}
 					
-					//Timeout receiving ACK on other end must have occured
+					//Verify the incoming packet is DATA, we dont want anything else
+					if (incomingRequestType != Request.DATA) {
+						
+						// Form the error message response
+						response = packageError(Variables.ERROR_4);
+						
+						// Set error detected flag
+						errorDetected = true;
+					
+					//Incoming packet is DATA
 					} else {
 						
-						//Log that we received unknown packet
-						Logger.log("Unexpected packet received, ignoring...");
+						//Very the incoming data
+						if (verifyDATA(received)) {
+							
+							//Start of Try/Catch
+							try {
+								
+								//Write data to file 
+								response = writeToFile(filename,
+										Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+							
+							//Error writting to file
+							} catch (Throwable e) {
+								
+								e.printStackTrace();
+								
+							}
 						
-						//continue to next packet received
-						continue;
-						
-						//If we get here we received a data block from the past that may have been delayed / re-transmitted
-						//We ignore it, and by not doing anything the last ACK we sent will be re-sent back bellow, so
-						//hopefully we will now get the correct data block back, or if the correct data block is already
-						//on its way here this ACK will be ignored by the client.
-						
+						//Timeout receiving ACK on other end must have occured
+						} else {
+							
+							//Log that we received unknown packet
+							Logger.log("Unexpected packet received, ignoring...");
+							
+							//continue to next packet received
+							continue;
+							
+							//If we get here we received a data block from the past that may have been delayed / re-transmitted
+							//We ignore it, and by not doing anything the last ACK we sent will be re-sent back bellow, so
+							//hopefully we will now get the correct data block back, or if the correct data block is already
+							//on its way here this ACK will be ignored by the client.
+							
+							
+						}
 						
 					}
+					
 					
 				}
 
@@ -388,6 +453,7 @@ public class ClientConnection implements Runnable {
 		Logger.log("Closing socket...");
 		sendReceiveSocket.close();
 		Logger.log("Thread done.");
+		
 	}
 
 	/**

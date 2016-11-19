@@ -526,7 +526,8 @@ public class Client {
 					}
 					
 					//Check incoming packet is formatted properly
-					if (VerifyUtil.verifyRequest(incomingPacket, incomingPacket.length) != Request.ACK) {
+					if (VerifyUtil.verifyRequest(incomingPacket, incomingPacket.length) != Request.ACK 
+							&& VerifyUtil.verifyRequest(incomingPacket, incomingPacket.length) != Request.ERROR) {
 						
 						//Not the right request, break
 						System.out.println("Invalid incoming request recevied, terminating.");
@@ -644,8 +645,17 @@ public class Client {
 						// Print error msg
 						System.out.println(errorMsg);
 	
-						// Error packet sent.. break
-						break;
+						//We terminate for any error code other than 5
+						if (incomingPacket[3] != 5) {
+							
+							//Log termination
+							Logger.log("Terminating because we received error code " + incomingPacket[3] + " from server");
+							
+							//Break
+							break;
+							
+						}
+						
 					}
 					
 					//Check if the next block is the last one
