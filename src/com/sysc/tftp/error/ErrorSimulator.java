@@ -223,7 +223,7 @@ public class ErrorSimulator implements Runnable {
 	}
 	
 	public void handleOpCode(String s) {
-		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack", "rand");
 		try {
 			String params[] = s.toLowerCase().trim().split(" ");
 			if (params.length < 4) {
@@ -365,7 +365,8 @@ public class ErrorSimulator implements Runnable {
 	 */
 	public void printHelp() {
 		System.out.println("TFTP Error Simulator");
-		System.out.println("<r> must be 'ack','data', 'wrq'. or 'rrq'");
+		System.out.println("<r> must be 'ack','data', 'wrq', or 'rrq'");
+		System.out.println("<r2> must be 'ack','data', 'wrq', 'rrq', or 'rand'");
 		System.out.println("<p> position of packet");
 		System.out.println("<d> delay in millisecounds");
 		System.out.println("<m> mode to change to");
@@ -375,7 +376,7 @@ public class ErrorSimulator implements Runnable {
 		System.out.println("\tverbose 	<on/off>			Turns verbose mode on or off");
 		System.out.println("\tquit						Exits the simulator");
 		System.out.println("\tmode		<m>				Change mode ");
-		System.out.println("\topcode		<r> <p>	<r>			Change opcode of specified packet");
+		System.out.println("\topcode		<r> <p>	<r2>			Change opcode of specified packet");
 		System.out.println("\tblock		<r> <p>	<p>			Change block# of specified packet");
 		System.out.println("\ttid		<r> <p>				Change the TID of specified packet");
 		System.out.println("\tdelay		<r> <p> <d>			Delays the specified packet by a number of ms");
