@@ -166,6 +166,9 @@ public class ErrorSimulator implements Runnable {
 			case "mode":
 				handleMode(input);
 				break;
+			case "block":
+				handleBlock(input);
+				break;
 			case "opcode":
 				handleOpCode(input);
 				break;
@@ -234,6 +237,32 @@ public class ErrorSimulator implements Runnable {
 			int newOpCode = requests.indexOf(params[3]) + 1;
 			OpCodeThread error = new OpCodeThread(requestType, Integer.valueOf(params[2]), newOpCode);
 			System.out.println("Added OpCodeThread to queue.");
+			nextThread.add(error);
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			return;
+		}
+	}
+	
+	public void handleBlock(String s) {
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		try {
+			String params[] = s.toLowerCase().trim().split(" ");
+			if (params.length < 4) {
+				System.out.println("Invalid parameters");
+				return;
+			} else if (!requests.contains(params[1])) {
+				System.out.println("Invalid request type");
+				return;
+				
+				//Confirm request is data/ack
+			}else if(params[1]==requests.get(1)||params[1]==requests.get(2)){
+				System.out.println("Invalid request type");
+				return;
+			}
+			int requestType = requests.indexOf(params[1]) + 1;
+			BlockThread error = new BlockThread(requestType, Integer.valueOf(params[2]), Integer.valueOf(params[3]));
+			System.out.println("Added BlockThread to queue.");
 			nextThread.add(error);
 		} catch (Exception e) {
 			System.out.println("Invalid command");
@@ -347,6 +376,7 @@ public class ErrorSimulator implements Runnable {
 		System.out.println("\tquit						Exits the simulator");
 		System.out.println("\tmode		<m>				Change mode ");
 		System.out.println("\topcode		<r> <p>	<r>			Change opcode of specified packet");
+		System.out.println("\tblock		<r> <p>	<p>			Change block# of specified packet");
 		System.out.println("\ttid		<r> <p>				Change the TID of specified packet");
 		System.out.println("\tdelay		<r> <p> <d>			Delays the specified packet by a number of ms");
 		System.out.println("\tdup		<r> <p> <d>			Sends a duplicate of the specified packet");
