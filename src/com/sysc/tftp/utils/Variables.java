@@ -50,16 +50,16 @@ public class Variables {
 	// server files location
 	public static String SERVER_FILES_DIR = System.getProperty("user.dir") + "/serverFiles/";
 	
-	//public static String SERVER_FILES_DIR = "E:\\";		//location of full usb used during testing
+	//public static String SERVER_FILES_FULL = "E:\\";		//location of full usb used during testing
 	
-	//public static String SERVER_FILES_DIR = "C:\\software";    //directory without write permissions (on lab machines) for testing access violations
+	//public static String SERVER_FILES_READ_ONLY = "C:\\software";    //directory without write permissions (on lab machines) for testing access violations
 	
 	// client files location
 	public static String CLIENT_FILES_DIR = System.getProperty("user.dir") + "/clientFiles/";
 	
-	//public static String CLIENT_FILES_DIR = "E:\\";		//location of full usb used during testing
+	//public static String CLIENT_FILES_DIR_FULL = "E:\\";		//location of full usb used during testing
 	
-	//public static String CLIENT_FILES_DIR = "C:\\software";		//directory without write permissions (on lab machines) for testing access violations
+	//public static String CLIENT_FILES_DIR_READ_ONLY = "C:\\software";		//directory without write permissions (on lab machines) for testing access violations
 
 	public static String TRANSFER_MODE = "octet";
 

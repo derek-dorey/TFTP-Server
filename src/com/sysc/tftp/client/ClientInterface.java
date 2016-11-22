@@ -56,6 +56,18 @@ public class ClientInterface {
 					} catch (Exception e) {
 						continue;
 					}
+				} else if (line.contains("cd")) {
+					String setting = line.split(" ")[1].toLowerCase().trim();
+					if("full".equals(setting)) {
+						Variables.CLIENT_FILES_DIR = "E:\\";
+						System.out.println("Client directory changed to full directory");
+					} else if("restricted".equals(setting)) {
+						Variables.CLIENT_FILES_DIR = "C:\\software";
+						System.out.println("Client directory changed to restricted directory");
+					} else if ("default".equals(setting)) {
+						Variables.CLIENT_FILES_DIR = System.getProperty("user.dir") + "/clientFiles/";
+						System.out.println("Client directory changed to default directory");
+					}
 				} else if (line.toLowerCase().contains("server")) {
 					String[] params = line.split(" ");
 					String ip = params[1];
@@ -89,13 +101,14 @@ public class ClientInterface {
 		System.out.println("<f> filename");
 		System.out.println("<i> ip address");
 		System.out.println("\tCommands:");
-		System.out.println("\thelp					Prints this message");
-		System.out.println("\tverbose		<on/off>		Turns verbose mode on or off");
-		System.out.println("\tmode		<normal/test>		Turns mode to test or normal");
-		System.out.println("\tquit					Exits the client");
-		System.out.println("\tread		<f>			Read file");
-		System.out.println("\twrite		<f>			Write file");
-		System.out.println("\tserver		<i>			Change server ip address to hit");
+		System.out.println("\thelp					     Prints this message");
+		System.out.println("\tverbose		<on/off>		     Turns verbose mode on or off");
+		System.out.println("\tmode		<normal/test>		     Turns mode to test or normal");
+		System.out.println("\tcd              <default/full/restricted>    Change client filepath");
+		System.out.println("\tquit					     Exits the client");
+		System.out.println("\tread		<f>			     Read file");
+		System.out.println("\twrite		<f>			     Write file");
+		System.out.println("\tserver		<i>			     Change server ip address to hit");
 		System.out.println("Current mode: [" + Variables.CLIENT_MODE.getType() + "]");
 		System.out.println("Verbose mode: [" + (Variables.VERBOSE ? "ON" : "OFF") + "]");
 		System.out.println();

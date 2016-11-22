@@ -9,6 +9,7 @@ import java.net.*;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -178,6 +179,9 @@ public class Client {
 		String fileName; 	//Filename of file being sent
 		int fromPort = 0;	//Port we are receiving packets from
 		
+		
+		
+		
 		// Start of Try/Catch
 		try {
 
@@ -248,6 +252,8 @@ public class Client {
 
 						// Reload the file
 						f = new File(filePath);
+						
+						Path p = Paths.get(filePath);
 
 						// Extract block # from incoming packet
 						currentBlockFromPacket = ((packetData[2] << 8) & 0xFF00) | (packetData[3] & 0xFF);
@@ -295,14 +301,18 @@ public class Client {
 							//Insufficient disk space for the file transfer	
 							} catch (IOException e3) {	
 								
+								try {
+									Files.delete(p);
+								} catch (IOException e4) {
+									break;
+								}
 								//Print error message
 								System.out.println("Disk Full.");
 								
 								//Exit save file data loop
 								break;
 								
-							}
-							
+							} 	
 						//Received wrong data packet, re-send correct ACK
 						} else {
 							

@@ -514,21 +514,21 @@ public class ClientConnection implements Runnable {
 	 *            Content to put in file
 	 */
 	public byte[] writeToFile(String filename, byte[] fileContent) throws Throwable {
+	
+		Path p = null;
+		
+		OutputStream out = null;
 		
 		//Start of Try/Catch
 		try {
-			
 			//Get path to filename
-			Path p = Paths.get(filename);
+			p = Paths.get(filename);
 			
 			//Open a new output stream
-			OutputStream out = Files.newOutputStream(p, StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
+			out = Files.newOutputStream(p, StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
 			
 			//Write the new data to the file 
 			out.write(fileContent);	
-			
-			//Close output stream
-			out.close();
 			
 		} catch (AccessDeniedException e) {  //tried to write to directory without write permissions, return access violation
 			errorDetected = true;
@@ -536,9 +536,19 @@ public class ClientConnection implements Runnable {
 		} catch (FileAlreadyExistsException e2) {  //tried to write a file that already exists, return file already exists
 			errorDetected = true;
 			return packageError(Variables.ERROR_6);
-		} catch (IOException e3) {					//insufficient disk space for the file transfer, return disk full
+		} catch (IOException e3) {					//insufficient disk space for the file transfer, return disk full	
+			
+			try {
+				Files.delete(p);						//delete the *empty* file
+			} catch (IOException e4) {
+			}
 			errorDetected = true;
 			return packageError(Variables.ERROR_3);
+		} finally {
+			//Close output stream
+			if(out!=null) {
+				out.close();
+			}
 		}
 		
 		// write successful.. return ACK

@@ -97,6 +97,22 @@ public class Server implements Runnable {
 							break;
 						} else if ("help".equals(s)) {
 							printHelp();
+						} else if (s.toLowerCase().contains("cd")) {
+							try {
+								String setting = s.split(" ")[1].toLowerCase().trim();
+								if(setting.equals("restricted")) {
+									Variables.SERVER_FILES_DIR = "C:\\software";
+									System.out.println("Server directory changed to restricted directory.");
+								} else if (setting.equals("full")) {
+									Variables.SERVER_FILES_DIR = "E:\\";
+									System.out.println("Server directory changed to full directory.");
+								} else if (setting.equals("default")){
+									Variables.SERVER_FILES_DIR = System.getProperty("user.dir") + "/serverFiles/";
+									System.out.println("Server directory changed to default directory");
+								}
+							} catch (Exception e) {
+								continue;
+							}	
 						} else if (s.toLowerCase().contains("verbose")) {
 							try {
 								String setting = s.split(" ")[1].toLowerCase().trim();
@@ -145,6 +161,7 @@ public class Server implements Runnable {
 		System.out.println("\tCommands:");
 		System.out.println("\thelp					Prints this message");
 		System.out.println("\tverbose <on/off>			Turns verbose mode on or off");
+		System.out.println("\tcd <default/full/restricted>            Change server filepath");
 		System.out.println("\tquit					Exits the server");
 	}
 
