@@ -32,7 +32,8 @@ public class ClientConnection implements Runnable {
 	private byte[] data = null; 		// holds the original request
 	private byte[] fileBytes = null;	// hold bytes of file to transfer
 	private int blockNumber = 0; 		// current block of data being received/sent
-
+	String filename = null;				// Filename of file under consideration
+	
 	// client information: port, IP, length of data
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
@@ -55,7 +56,6 @@ public class ClientConnection implements Runnable {
 	@Override
 	public void run() {
 		byte[] response = null;
-		String filename = null;
 		int timeouts = 0;				//Counter for timeouts
 		int currentBlockFromPacket = 0;	//Current block number from incoming packet
 		int fromPort = 0;				//Port we are receiving from
@@ -649,7 +649,7 @@ public class ClientConnection implements Runnable {
 		byte[] zeroByte = { (byte) 0 };
 
 		if (error == Variables.ERROR_1) {
-			errorMessage = "File not found.";
+			errorMessage = "File '"+ filename + "' not found.";
 		}
 
 		else if (error == Variables.ERROR_2) {
@@ -661,7 +661,7 @@ public class ClientConnection implements Runnable {
 		}
 
 		else if (error == Variables.ERROR_6) {
-			errorMessage = "File already exists.";
+			errorMessage = "File '"+ filename + "' already exists.";
 		}
 
 		errorBytes = errorMessage.getBytes();

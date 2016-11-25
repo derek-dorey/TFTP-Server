@@ -425,9 +425,11 @@ public class Client {
 
 		// Check if file already exists
 		if (!f.exists() || f.isDirectory()) {
+			
 			// File already exists
-			System.out.println("The file you are trying to send does not exist");
+			System.out.println("The file you are trying to send '" + fileName + "' does not exist");
 			return;
+			
 		}
 
 		// Start of Try/Catch
