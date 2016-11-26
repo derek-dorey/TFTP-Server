@@ -7,18 +7,14 @@ import java.net.DatagramSocket;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
-public class ModeThread extends ErrorThread {
+public class LastThread extends ErrorThread {
 
-	private String mode;
-
-	public ModeThread(String mode) {
-		this.mode = mode;
-	}
+	public LastThread() {}
 
 	@Override
 	public void run() {
-		changeMode();
-		Logger.log("Mode changed.");
+		removeLast();
+		Logger.log("Last byte removed.");
 
 		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
 
@@ -93,20 +89,10 @@ public class ModeThread extends ErrorThread {
 		}
 	}
 
-	public void changeMode() {
-		int j;
-		for (j = 2; j < data.length; j++) {
-			if (data[j] == 0)
-				break;
-		}
-		byte[] newMessage = new byte[j + this.mode.length() + 2];
+	public void removeLast() {		
+		byte[] newMessage = new byte[len - 1];
 
-		System.arraycopy(data, 0, newMessage, 0, j);
-
-		byte[] newMode = this.mode.getBytes();
-
-		System.arraycopy(newMode, 0, newMessage, j + 1, newMode.length);
-		newMessage[newMessage.length - 1] = 0;
+		System.arraycopy(data, 0, newMessage, 0, len - 1);
 
 		data = newMessage;
 		len = newMessage.length;

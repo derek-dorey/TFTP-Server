@@ -7,21 +7,29 @@ import java.net.DatagramSocket;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
-public class ModeThread extends ErrorThread {
+public class FirstThread extends ErrorThread {
 
-	private String mode;
+	private int position;
+	private int packetType;
+	private boolean removedFirst;
 
-	public ModeThread(String mode) {
-		this.mode = mode;
+	public FirstThread(int packet, int position) {
+		this.position = position;
+		this.packetType = packet;
+		this.removedFirst = false;
 	}
 
 	@Override
 	public void run() {
-		changeMode();
-		Logger.log("Mode changed.");
+		if (isRequest(this.packetType, data)) {
+			data = removeFirst(data, len);
+			len = data.length;
+			removedFirst = true;
+			Logger.log("First byte removed.");
+		}
 
 		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
-
+		
 		Logger.logRequestPacketSending(sendPacket);
 
 		// Send the datagram packet to the server via the
@@ -40,7 +48,8 @@ public class ModeThread extends ErrorThread {
 
 		byte[] newData = new byte[Variables.MAX_PACKET_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(newData, newData.length);
-
+		len = receivePacket.getLength();
+		
 		Logger.log("Simulator: Waiting for packet.");
 		try {
 			// Block until a datagram is received via sendReceiveSocket.
@@ -54,20 +63,26 @@ public class ModeThread extends ErrorThread {
 		int serverPort = receivePacket.getPort();
 
 		while (true) {
+			len = receivePacket.getLength();
+
+			if (!removedFirst && (isRequest(this.packetType, newData) && isPosition(position, newData))) {
+				newData = removeFirst(newData, len);
+				len = newData.length;
+				removedFirst = true;
+				Logger.log("First byte removed.");
+			}
 			// Construct a DatagramPacket for receiving packets up
 			// to 512 bytes long (the length of the byte array).
 			if (receivePacket.getPort() == clientPort) {
-				sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+				sendPacket = new DatagramPacket(newData, len, receivePacket.getAddress(),
 						serverPort);
 			} else {
-				sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+				sendPacket = new DatagramPacket(newData, len, receivePacket.getAddress(),
 						clientPort);
 			}
 
-			Logger.logPacketSending(sendPacket);
-
-			// Send the datagram packet to the client via a new socket.
 			try {
+				Logger.logPacketSending(sendPacket);
 				sendReceiveSocket.send(sendPacket);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -93,23 +108,14 @@ public class ModeThread extends ErrorThread {
 		}
 	}
 
-	public void changeMode() {
-		int j;
-		for (j = 2; j < data.length; j++) {
-			if (data[j] == 0)
-				break;
-		}
-		byte[] newMessage = new byte[j + this.mode.length() + 2];
+	public byte[] removeFirst(byte[] data, int len) {
+		byte[] newMessage = new byte[len - 1];
 
-		System.arraycopy(data, 0, newMessage, 0, j);
-
-		byte[] newMode = this.mode.getBytes();
-
-		System.arraycopy(newMode, 0, newMessage, j + 1, newMode.length);
-		newMessage[newMessage.length - 1] = 0;
+		System.arraycopy(data, 1, newMessage, 0, len - 1);
 
 		data = newMessage;
 		len = newMessage.length;
+		return newMessage;
 	}
 
 }

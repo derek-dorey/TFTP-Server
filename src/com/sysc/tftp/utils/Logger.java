@@ -164,8 +164,12 @@ public class Logger {
 		System.out.println("[" + threadId + "]: " + "Response type: " + type);
 
 		// block number
-		int num = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
-		System.out.println("[" + threadId + "]: " + "Block number: " + num);
+		try {
+			int num = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
+			System.out.println("[" + threadId + "]: " + "Block number: " + num);
+		} catch (Exception e) {
+			System.out.println("[" + threadId + "]: " + "Block number: Unknown");			
+		}
 	}
 
 	/**

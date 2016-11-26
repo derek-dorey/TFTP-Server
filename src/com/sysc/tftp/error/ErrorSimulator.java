@@ -145,15 +145,17 @@ public class ErrorSimulator implements Runnable {
 		ErrorSimulator es = new ErrorSimulator();
 		es.start();
 	}
-	
+
 	/**
 	 * Handles commands with parameters
-	 * @param s, user command
+	 * 
+	 * @param s,
+	 *            user command
 	 */
 	public void handleSim(String s) {
 		String input = s.toLowerCase().trim();
 		try {
-			switch(input.split(" ")[0]) {
+			switch (input.split(" ")[0]) {
 			case "delay":
 				handle(input);
 				break;
@@ -169,6 +171,16 @@ public class ErrorSimulator implements Runnable {
 			case "file":
 				handleFile(input);
 				break;
+			case "first":
+				handleFirst(input);
+				break;
+			case "last":
+				handleLast(input);
+				break;
+			case "sep":
+				handleSep(input);
+				break;
+
 			case "block":
 				handleBlock(input);
 				break;
@@ -187,7 +199,7 @@ public class ErrorSimulator implements Runnable {
 			return;
 		}
 	}
-	
+
 	public void handleMode(String s) {
 		try {
 			String params[] = s.toLowerCase().trim().split(" ");
@@ -203,7 +215,7 @@ public class ErrorSimulator implements Runnable {
 			return;
 		}
 	}
-	
+
 	public void handleFile(String s) {
 		try {
 			String params[] = s.toLowerCase().trim().split(" ");
@@ -219,7 +231,50 @@ public class ErrorSimulator implements Runnable {
 			return;
 		}
 	}
-	
+
+	public void handleFirst(String s) {
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		try {
+			String params[] = s.toLowerCase().trim().split(" ");
+			if (params.length < 3) {
+				System.out.println("Invalid parameters");
+				return;
+			} else if (!requests.contains(params[1])) {
+				System.out.println("Invalid request type");
+				return;
+			}
+			int requestType = requests.indexOf(params[1]) + 1;
+			ErrorThread error = new FirstThread(requestType, Integer.valueOf(params[2]));
+			System.out.println("Added FirstThread to queue.");
+			nextThread.add(error);
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			return;
+		}
+	}
+
+	public void handleLast(String s) {
+		try {
+			ErrorThread error = new LastThread();
+			System.out.println("Added LastThread to queue.");
+			nextThread.add(error);
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			return;
+		}
+	}
+
+	public void handleSep(String s) {
+		try {
+			ErrorThread error = new SeperatorThread();
+			System.out.println("Added SeperatorThread to queue.");
+			nextThread.add(error);
+		} catch (Exception e) {
+			System.out.println("Invalid command");
+			return;
+		}
+	}
+
 	public void handleTID(String s) {
 		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
 		try {
@@ -232,7 +287,7 @@ public class ErrorSimulator implements Runnable {
 				return;
 			}
 			int requestType = requests.indexOf(params[1]) + 1;
-			TIDThread error = new TIDThread(requestType, Integer.valueOf(params[2]));
+			ErrorThread error = new TIDThread(requestType, Integer.valueOf(params[2]));
 			System.out.println("Added TIDThread to queue.");
 			nextThread.add(error);
 		} catch (Exception e) {
@@ -240,7 +295,7 @@ public class ErrorSimulator implements Runnable {
 			return;
 		}
 	}
-	
+
 	public void handleOpCode(String s) {
 		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack", "rand");
 		try {
@@ -254,7 +309,7 @@ public class ErrorSimulator implements Runnable {
 			}
 			int requestType = requests.indexOf(params[1]) + 1;
 			int newOpCode = requests.indexOf(params[3]) + 1;
-			OpCodeThread error = new OpCodeThread(requestType, Integer.valueOf(params[2]), newOpCode);
+			ErrorThread error = new OpCodeThread(requestType, Integer.valueOf(params[2]), newOpCode);
 			System.out.println("Added OpCodeThread to queue.");
 			nextThread.add(error);
 		} catch (Exception e) {
@@ -262,7 +317,7 @@ public class ErrorSimulator implements Runnable {
 			return;
 		}
 	}
-	
+
 	public void handleBlock(String s) {
 		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
 		try {
@@ -273,14 +328,14 @@ public class ErrorSimulator implements Runnable {
 			} else if (!requests.contains(params[1])) {
 				System.out.println("Invalid request type");
 				return;
-				
-				//Confirm request is data/ack
-			}else if(params[1]==requests.get(1)||params[1]==requests.get(2)){
+
+				// Confirm request is data/ack
+			} else if (params[1] == requests.get(1) || params[1] == requests.get(2)) {
 				System.out.println("Invalid request type");
 				return;
 			}
 			int requestType = requests.indexOf(params[1]) + 1;
-			BlockThread error = new BlockThread(requestType, Integer.valueOf(params[2]), Integer.valueOf(params[3]));
+			ErrorThread error = new BlockThread(requestType, Integer.valueOf(params[2]), Integer.valueOf(params[3]));
 			System.out.println("Added BlockThread to queue.");
 			nextThread.add(error);
 		} catch (Exception e) {
@@ -288,10 +343,12 @@ public class ErrorSimulator implements Runnable {
 			return;
 		}
 	}
-	
+
 	/**
 	 * Handles commands with parameters
-	 * @param s, user command
+	 * 
+	 * @param s,
+	 *            user command
 	 */
 	public void handle(String s) {
 		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
@@ -349,13 +406,18 @@ public class ErrorSimulator implements Runnable {
 			return;
 		}
 	}
-	
+
 	/**
 	 * Adds a error simulating thread to the queue
-	 * @param operation, lose(1), delay(2) or duplicate(3)
-	 * @param packet, rrw, wrq, ack or data
-	 * @param position, position of packet
-	 * @param delay, amount to delay in ms
+	 * 
+	 * @param operation,
+	 *            lose(1), delay(2) or duplicate(3)
+	 * @param packet,
+	 *            rrw, wrq, ack or data
+	 * @param position,
+	 *            position of packet
+	 * @param delay,
+	 *            amount to delay in ms
 	 */
 	public void addToQueue(int operation, int packet, int position, int delay) {
 		ErrorThread error = null;
@@ -397,6 +459,9 @@ public class ErrorSimulator implements Runnable {
 		System.out.println("\tquit						Exits the simulator");
 		System.out.println("\tmode		<m>				Change mode ");
 		System.out.println("\tfile		<f>				Change file ");
+		System.out.println("\tfirst		<r> <p>				Remove first byte of specified packet");
+		System.out.println("\tlast						Remove last byte of request packet");
+		System.out.println("\tsep						Remove byte between file and mode");
 		System.out.println("\topcode		<r> <p>	<r2>			Change opcode of specified packet");
 		System.out.println("\tblock		<r> <p>	<p>			Change block# of specified packet");
 		System.out.println("\ttid		<r> <p>				Change the TID of specified packet");

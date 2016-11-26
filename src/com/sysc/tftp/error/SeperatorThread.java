@@ -7,18 +7,14 @@ import java.net.DatagramSocket;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
-public class ModeThread extends ErrorThread {
+public class SeperatorThread extends ErrorThread {
 
-	private String mode;
-
-	public ModeThread(String mode) {
-		this.mode = mode;
-	}
+	public SeperatorThread() {}
 
 	@Override
 	public void run() {
-		changeMode();
-		Logger.log("Mode changed.");
+		removeSeperator();
+		Logger.log("Seperator removed.");
 
 		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
 
@@ -93,20 +89,16 @@ public class ModeThread extends ErrorThread {
 		}
 	}
 
-	public void changeMode() {
+	public void removeSeperator() {
 		int j;
-		for (j = 2; j < data.length; j++) {
+		for (j = 2; j < len; j++) {
 			if (data[j] == 0)
 				break;
 		}
-		byte[] newMessage = new byte[j + this.mode.length() + 2];
+		byte[] newMessage = new byte[len - 1];
 
 		System.arraycopy(data, 0, newMessage, 0, j);
-
-		byte[] newMode = this.mode.getBytes();
-
-		System.arraycopy(newMode, 0, newMessage, j + 1, newMode.length);
-		newMessage[newMessage.length - 1] = 0;
+		System.arraycopy(data, j + 1, newMessage, j, len - j - 1);
 
 		data = newMessage;
 		len = newMessage.length;
