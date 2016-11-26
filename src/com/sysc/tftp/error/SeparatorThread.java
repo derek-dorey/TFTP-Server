@@ -7,9 +7,9 @@ import java.net.DatagramSocket;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
-public class SeperatorThread extends ErrorThread {
+public class SeparatorThread extends ErrorThread {
 
-	public SeperatorThread() {}
+	public SeparatorThread() {}
 
 	@Override
 	public void run() {

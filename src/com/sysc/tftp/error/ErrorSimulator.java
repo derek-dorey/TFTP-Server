@@ -266,8 +266,8 @@ public class ErrorSimulator implements Runnable {
 
 	public void handleSep(String s) {
 		try {
-			ErrorThread error = new SeperatorThread();
-			System.out.println("Added SeperatorThread to queue.");
+			ErrorThread error = new SeparatorThread();
+			System.out.println("Added SeparatorThread to queue.");
 			nextThread.add(error);
 		} catch (Exception e) {
 			System.out.println("Invalid command");

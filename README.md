@@ -1,7 +1,7 @@
 ====================================================================================================
 ====================================================================================================
 
-README File for Project - Iteration 2 - TFTP 
+README File for Project - Iteration 4 - TFTP 
 
 	Derek Dorey
 	Lee Fisher
@@ -37,6 +37,8 @@ RESPONSIBILITIES
 		- Helped team members fix some small issues within client and server.
 	Iteration 3:
 		- Updating the client and server side to handle lost packets, delayed packets and duplicate packets
+	Iteration 4:
+		- Updating the client and server to verify requests and handle tid changes
 
 ###Derek Dorey
 	Iteration 1:
@@ -47,6 +49,9 @@ RESPONSIBILITIES
 		- Fixing iteration 2 issues
 		- UML and timing diagrams
 		- Testing and confirming duplicate, delayed and lost packets in the error simulator
+	Iteration 4:
+		- Added commands to change file/server directories during runtime
+		- Fixed issues from iteration 1-3
 
 ###Lee  Fisher
 	Iteration 1:
@@ -56,6 +61,8 @@ RESPONSIBILITIES
 	Iteration 3:
 		- Fixing iteration 2 issues
 		- UML and timing diagrams
+	Iteration 4:
+		- Added corrupting request error simulations
 
 ###Lexi Brown
 	Iteration 1:
@@ -67,6 +74,8 @@ RESPONSIBILITIES
 		- Updating readme
 		- Building error simulator console interface
 		- Implementing duplicate, delayed and lost packets in the error simulator
+	Iteration 4:
+		- Added tid change error simulation
 
 ====================================================================================================
 ====================================================================================================
@@ -107,6 +116,14 @@ RUNNING THE PROGRAM IN TEST OR VERBOSE MODE
 			* verbose off
 			* help
 			* quit
+			* mode <mode>
+			* file <file>
+			* first <request> <position>
+			* last
+			* sep
+			* opcode <request> <position> <new_request>
+			* block <request> <position> <new_position>
+			* tid <request> <position>
 			* delay <request> <position> <delay>
 			* dup <request> <position> <delay>
 			* lose <request> <position>
@@ -184,6 +201,54 @@ IMPLEMENTATION DETAILS
 	* Wait for server to send back response and then pass response to client
 	* Continues to pass data between client and server until file transfer is complete.
 
+11. BlockThread.java
+	* Changes the block number of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+12. FileThread.java
+	* Changes the file of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+13. FirstThread.java
+	* Removes the first byte of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+14. LastThread.java
+	* Removes the last byte of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+15. ModeThread.java
+	* Changes the mode of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+16. OpCodeThread.java
+	* Changes the op code of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+17. SeparatorThread.java
+	* Removes the file and mode separator of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
+18. TIDThread.java
+	* Changes the TID of a specific packet based on user input
+	* Accept datagram packet from the socket and pass the received datagram to the server.
+	* Wait for server to send back response and then pass response to client
+	* Continues to pass data between client and server until file transfer is complete.
+
 
 OTHER FILES
 ===========
@@ -204,16 +269,22 @@ OTHER FILES
 5. test2.txt
 	* A short file for the client to test reading
 
-4. text.txt
+6. text.txt
 	* A long file for the client to test reading large files
 
-5. UML.png
-	* The UML (Unified Modeling Language) for each class
+7. long.txt
+	* A super long file for the client to test writing very large files
 
-6. Error Code *.jpeg
+8. UMLpt1.JPG
+	* Part 1 of the UML (Unified Modeling Language) for each classes 
+	
+9. UMLpt2.JPG
+	* Part 2 of the UML (Unified Modeling Language) for each class
+
+10. Error Code *.jpeg
 	* All the timing diagrams from errors while reading or writing
-
-7. Timeout - *.jpeg
+	
+11. Timeout - *.jpeg
 	* All the timing diagrams for timeout scenarios
 
 TERMINATION
