@@ -8,49 +8,52 @@ import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
 public class BlockThread extends ErrorThread {
-	
+
 	private int position;
 	private int newPosition;
 	private int packetType;
 	private boolean changeBlock;
-	
+
 	public BlockThread(int packet, int position, int newPosition) {
 		this.position = position;
 		this.packetType = packet;
-		this.newPosition =newPosition;
+		this.newPosition = newPosition;
 		this.changeBlock = true;
 	}
-	
+
 	@Override
 	public void run() {
 		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
 
 		Logger.logRequestPacketSending(sendPacket);
-				
+
 		// Send the datagram packet to the server via the
 		// send/receive socket.
 		DatagramSocket sendReceiveSocket = null;
 		try {
-			
-			//-------------------Change Block# here (not sure if this is needed, as request will never have block#)--------------------------
-			
-			//check if its the right packet to change block#
-			if  (isRequest(this.packetType, data)){
-				
-				//change block#
+
+			// -------------------Change Block# here (not sure if this is
+			// needed, as request will never have
+			// block#)--------------------------
+
+			// check if its the right packet to change block#
+			if (isRequest(this.packetType, data)) {
+
+				// change block#
 				data[2] = (byte) ((newPosition >> 8) & 0xFF);
 				data[3] = (byte) (newPosition & 0xFF);
-				
-				//construct new packet with changed block#
+
+				// construct new packet with changed block#
 				sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
 				changeBlock = false;
+				Logger.log("Changed block number.");
 			}
-			
-			//---------------------------------------------------------------
-			
+
+			// ---------------------------------------------------------------
+
 			sendReceiveSocket = new DatagramSocket();
 			sendReceiveSocket.send(sendPacket);
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			sendReceiveSocket.close();
@@ -73,19 +76,20 @@ public class BlockThread extends ErrorThread {
 
 		Logger.logPacketReceived(receivePacket);
 		int serverPort = receivePacket.getPort();
-		
-		while (true) {	
-			
+
+		while (true) {
+
 			try {
-				//-------------------Change Block# here--------------------------
-				
-				//check if its the right packet to change block#
-				if  ((isRequest(this.packetType, newData) && isPosition(position, newData) && changeBlock)){
-					
-					//change block#
+				// -------------------Change Block#
+				// here--------------------------
+
+				// check if its the right packet to change block#
+				if ((isRequest(this.packetType, newData) && isPosition(position, newData) && changeBlock)) {
+
+					// change block#
 					newData[2] = (byte) ((newPosition >> 8) & 0xFF);
 					newData[3] = (byte) (newPosition & 0xFF);
-					//construct new packet with corrupted opcode
+					// construct new packet with corrupted opcode
 					if (receivePacket.getPort() == clientPort) {
 						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
 								serverPort);
@@ -93,11 +97,12 @@ public class BlockThread extends ErrorThread {
 						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
 								clientPort);
 					}
-					
-					changeBlock=false;
-						//---------------------------------------------------------------
-				}else{
-				
+
+					changeBlock = false;
+					Logger.log("Changed block number.");
+					// ---------------------------------------------------------------
+				} else {
+
 					// Construct a DatagramPacket for receiving packets up
 					// to 512 bytes long (the length of the byte array).
 					if (receivePacket.getPort() == clientPort) {
@@ -107,19 +112,19 @@ public class BlockThread extends ErrorThread {
 						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
 								clientPort);
 					}
-					
+
 				}
-				
-				//log the packet being sent
-				if (newData[1]==1 || newData[1]==2){
+
+				// log the packet being sent
+				if (newData[1] == 1 || newData[1] == 2) {
 					Logger.logRequestPacketSending(sendPacket);
-				}else{
+				} else {
 					Logger.logPacketSending(sendPacket);
 				}
-				
-				//send the packet via sendReceive socket
+
+				// send the packet via sendReceive socket
 				sendReceiveSocket.send(sendPacket);
-				
+
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(1);
