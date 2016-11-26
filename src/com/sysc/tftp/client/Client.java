@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+
+import com.sysc.tftp.utils.BlockUtil;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 import com.sysc.tftp.utils.Variables.Request;
@@ -23,8 +25,7 @@ public class Client {
 	private DatagramPacket sendPacket, receivePacket;
 	private DatagramSocket sendReceiveSocket;
 
-	public Client() {
-	}
+	public Client() {}
 
 	/**
 	 * Create either a new read request or a new write request which will be
@@ -256,7 +257,10 @@ public class Client {
 						Path p = Paths.get(filePath);
 
 						// Extract block # from incoming packet
-						currentBlockFromPacket = ((packetData[2] << 8) & 0xFF00) | (packetData[3] & 0xFF);
+						byte[] block = new byte[2];
+						block[0] = packetData[2];
+						block[1] = packetData[3];
+						currentBlockFromPacket = BlockUtil.byteToInt(block);
 						
 						//If incoming block is the block we expected
 						if (currentBlockFromPacket == currentBlock ) {
@@ -568,7 +572,10 @@ public class Client {
 						}
 						
 						// Extract block # from incoming packet
-						currentBlockFromPacket = ((incomingPacket[2] << 8) & 0xFF00) | (incomingPacket[3] & 0xFF);
+						byte[] block = new byte[2];
+						block[0] = incomingPacket[2];
+						block[1] = incomingPacket[3];
+						currentBlockFromPacket = BlockUtil.byteToInt(block);
 						
 						Logger.log( "Current blockNumber " + blockNumber);
 						
@@ -599,8 +606,10 @@ public class Client {
 							// Data packet op code and block #
 							data[0] = 0;
 							data[1] = 3;
-							data[2] = (byte) ((byte) blockNumber >> 8);
-							data[3] = (byte) blockNumber;
+							
+							block = BlockUtil.intToByte(blockNumber);
+							data[2] = block[0];
+							data[3] = block[1];
 		
 							// Copy file data into packet
 							System.arraycopy(dataSection, 0, data, 4, dataSection.length);
@@ -746,8 +755,10 @@ public class Client {
 			// Request message (opcode = 2 bytes, block # = 2 bytes)
 			requestMsg[0] = 0;
 			requestMsg[1] = 4;
-			requestMsg[2] = (byte) ((byte) blockNumber >> 8);
-			requestMsg[3] = (byte) blockNumber;
+			
+			byte[] block = BlockUtil.intToByte(blockNumber);
+			requestMsg[2] = block[0];
+			requestMsg[3] = block[1];
 
 			// Create new datagram packet to send
 			sendPacket = new DatagramPacket(requestMsg, requestMsg.length, Variables.serverIP, tidServer);

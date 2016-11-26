@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
+import com.sysc.tftp.utils.BlockUtil;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 import com.sysc.tftp.utils.Variables.Request;
@@ -131,8 +132,9 @@ public class ClientConnection implements Runnable {
 			} else {
 				
 				// Valid write request: format ACK response
-				Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
-				Variables.ACK[3] = (byte) blockNumber;
+				byte[] block = BlockUtil.intToByte(blockNumber);
+				Variables.ACK[2] = block[0];
+				Variables.ACK[3] = block[1];
 				response = Variables.ACK;
 				
 			}
@@ -322,7 +324,10 @@ public class ClientConnection implements Runnable {
 				}
 				
 				//Get block number from packet
-				currentBlockFromPacket = ((received[2] << 8) & 0xFF00) | (received[3] & 0xFF);
+				byte[] block = new byte[2];
+				block[0] = received[2];
+				block[1] = received[3];
+				currentBlockFromPacket = BlockUtil.byteToInt(block);
 	
 				//If read request
 				if (req == Request.RRQ) {
@@ -467,8 +472,9 @@ public class ClientConnection implements Runnable {
 		
 		System.arraycopy(Variables.DATA, 0, dataPackage, 0, 2);	//Copy data packet type to array
 		
-		dataPackage[2] = (byte) ((byte) blockNumber >> 8);	//Set block number in packet
-		dataPackage[3] = (byte) blockNumber;				//Set block number in packet
+		byte[] block = BlockUtil.intToByte(blockNumber);
+		dataPackage[2] = block[0];
+		dataPackage[3] = block[1];
 		
 		//This isn't the last packet
 		if (fileBytes.length > Variables.MAX_PACKET_SIZE - Variables.DATA.length) {
@@ -558,8 +564,9 @@ public class ClientConnection implements Runnable {
 		System.arraycopy(Variables.ACK, 0, ackPackage, 0, 2);
 
 		//Copy block number into package
-		ackPackage[2] = (byte) ((byte) blockNumber >> 8);
-		ackPackage[3] = (byte) blockNumber;
+		byte[] block = BlockUtil.intToByte(blockNumber);
+		ackPackage[2] = block[0];
+		ackPackage[3] = block[1];
 		
 		//return ACK package
 		return ackPackage;
@@ -573,9 +580,9 @@ public class ClientConnection implements Runnable {
 	 * @return if proper ACK message
 	 */
 	public boolean verifyACK(byte[] data) {
-		
-		Variables.ACK[2] = (byte) ((byte) blockNumber >> 8);
-		Variables.ACK[3] = (byte) blockNumber;
+		byte[] block = BlockUtil.intToByte(blockNumber);
+		Variables.ACK[2] = block[0];
+		Variables.ACK[3] = block[1];
 		for (int i = 0; i < Variables.ACK.length; i++) {
 			if (Variables.ACK[i] != data[i]) {
 				return false;
@@ -603,8 +610,9 @@ public class ClientConnection implements Runnable {
 		blockNumber++;
 		
 		//Set what the data packet block numbers should be 
-		Variables.DATA[2] = (byte) ((byte) blockNumber >> 8);
-		Variables.DATA[3] = (byte) blockNumber;
+		byte[] block = BlockUtil.intToByte(blockNumber);
+		Variables.DATA[2] = block[0];
+		Variables.DATA[3] = block[1];
 		
 		//Loop each element of data block characteristics
 		for (int i = 0; i < Variables.DATA.length; i++) {

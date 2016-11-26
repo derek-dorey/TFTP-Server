@@ -165,7 +165,10 @@ public class Logger {
 
 		// block number
 		try {
-			int num = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
+			byte[] block = new byte[2];
+			block[0] = data[2];
+			block[1] = data[3];
+			int num = BlockUtil.byteToInt(block);
 			System.out.println("[" + threadId + "]: " + "Block number: " + num);
 		} catch (Exception e) {
 			System.out.println("[" + threadId + "]: " + "Block number: Unknown");			

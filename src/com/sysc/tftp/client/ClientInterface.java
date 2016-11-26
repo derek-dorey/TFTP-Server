@@ -113,5 +113,5 @@ public class ClientInterface {
 		System.out.println("Verbose mode: [" + (Variables.VERBOSE ? "ON" : "OFF") + "]");
 		System.out.println();
 	}
-
+	
 }

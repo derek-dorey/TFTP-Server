@@ -449,7 +449,7 @@ public class ErrorSimulator implements Runnable {
 		System.out.println("<r> must be 'ack','data', 'wrq', or 'rrq'");
 		System.out.println("<r2> must be 'ack','data', 'wrq', 'rrq', or 'rand'");
 		System.out.println("<p> position of packet");
-		System.out.println("<d> delay in millisecounds");
+		System.out.println("<d> delay in milliseconds");
 		System.out.println("<m> mode to change to");
 		System.out.println("<f> file to change to");
 		System.out.println("The server and client timeout is " + Variables.packetTimeout + "ms");
