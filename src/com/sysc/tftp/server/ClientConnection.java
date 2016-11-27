@@ -72,7 +72,7 @@ public class ClientConnection implements Runnable {
 		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size of data in data packet
 
 		//Verify incoming request type
-		Request req = VerifyUtil.verifyRequest(data, len);
+		Request req = VerifyUtil.verifyInitialRequest(data, len);
 		
 		if (req == null || req == Request.ERROR) {
 			Logger.log("Invalid request");
