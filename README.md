@@ -52,6 +52,7 @@ RESPONSIBILITIES
 	Iteration 4:
 		- Added commands to change file/server directories during runtime
 		- Fixed issues from iteration 1-3
+		- Timing and uml diagrams
 
 ###Lee  Fisher
 	Iteration 1:
@@ -63,6 +64,7 @@ RESPONSIBILITIES
 		- UML and timing diagrams
 	Iteration 4:
 		- Added corrupting request error simulations
+		- Added missing diagrams from iteration 3
 
 ###Lexi Brown
 	Iteration 1:
