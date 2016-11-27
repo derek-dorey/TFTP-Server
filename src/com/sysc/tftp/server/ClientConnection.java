@@ -143,7 +143,17 @@ public class ClientConnection implements Runnable {
 
 		//Create datagram packet to send 
 		sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
-
+		//If we havn't set the port we're receiving from yet
+		if (fromPort == 0) {
+			
+			// Set from port as port we are receiving first packet from
+			fromPort = clientPort;
+			
+			//Log the from port 
+			Logger.log("We are receiving from port " + fromPort);				
+			
+		}
+		
 		//Log packet sending
 		Logger.logPacketSending(sendPacket);
 
@@ -258,17 +268,6 @@ public class ClientConnection implements Runnable {
 			// Process the received datagram.
 			Logger.logPacketReceived(receivePacket);
 
-			//If we havn't set the port we're receiving from yet
-			if (fromPort == 0) {
-				
-				//Set from port as port we are receiving first packet from
-				fromPort = receivePacket.getPort();
-				
-				//Log the from port 
-				Logger.log("We are receiving from port " + fromPort);				
-				
-			}
-			
 			//Check incoming packet port with port we are use to receiving from
 			if (fromPort != receivePacket.getPort()) {
 				
@@ -276,7 +275,29 @@ public class ClientConnection implements Runnable {
 				Logger.log("Received packet from unknown source port...");
 				
 				// Form the error message response, not set error flag because we want to continue
-				response = packageError(Variables.ERROR_5);		
+				response = packageError(Variables.ERROR_5);
+				//Create new response packet 
+				sendPacket = new DatagramPacket(response, response.length, clientIP, receivePacket.getPort());
+				
+				//Log we are sending this packet
+				Logger.logPacketSending(sendPacket);
+
+				//Start of Try/Catch
+				try {
+					
+					//Send the packet
+					sendReceiveSocket.send(sendPacket);
+					
+				//Error sending packet
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+
+				//Log the server sent the packet successfully
+				Logger.log("Server: packet sent using port " + sendReceiveSocket.getLocalPort());
+				Logger.log("");
+				continue;
 			
 			//Packet is from the correct source!
 			} else {

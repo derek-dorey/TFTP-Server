@@ -276,17 +276,17 @@ public class ErrorSimulator implements Runnable {
 	}
 
 	public void handleTID(String s) {
-		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		List<String> requests = Arrays.asList("data", "ack");
 		try {
 			String params[] = s.toLowerCase().trim().split(" ");
 			if (params.length < 3) {
 				System.out.println("Invalid parameters");
 				return;
 			} else if (!requests.contains(params[1])) {
-				System.out.println("Invalid request type");
+				System.out.println("Invalid request type (Can only be data or ack)");
 				return;
 			}
-			int requestType = requests.indexOf(params[1]) + 1;
+			int requestType = requests.indexOf(params[1]) + 3;
 			ErrorThread error = new TIDThread(requestType, Integer.valueOf(params[2]));
 			System.out.println("Added TIDThread to queue.");
 			nextThread.add(error);

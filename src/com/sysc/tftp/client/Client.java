@@ -227,7 +227,7 @@ public class Client {
 						
 						//Log packet received from bad source
 						Logger.log("Received packet from unknown source port...");
-						
+						currentBlock--;
 						//If ports don't match up, skip this packet
 						continue;
 						
@@ -444,6 +444,9 @@ public class Client {
 
 			// Open new datagram socket
 			sendReceiveSocket = new DatagramSocket(tid);
+			
+			//Specify the timeout for the socket
+			sendReceiveSocket.setSoTimeout(Variables.packetTimeout);
 
 			// Start of Try/Catch
 			try {
@@ -515,10 +518,8 @@ public class Client {
 
 				// Start of Try/Catch
 				try {
-				
 					// Block until a datagram is received via sendReceiveSocket.
 					sendReceiveSocket.receive(receivePacket);
-
 					// Write packet incoming to log
 					Logger.logPacketReceived(receivePacket);
 	
@@ -535,7 +536,7 @@ public class Client {
 						
 						//Log packet received from unknown source
 						Logger.log("Received packet from unknown source port");
-						
+						blockNumber--;
 						//If ports don't match up, skip this packet
 						continue;
 						
@@ -666,16 +667,11 @@ public class Client {
 						// Print error msg
 						System.out.println(errorMsg);
 	
-						//We terminate for any error code other than 5
-						if (incomingPacket[3] != 5) {
-							
-							//Log termination
-							Logger.log("Terminating because we received error code " + incomingPacket[3] + " from server");
-							
-							//Break
-							break;
-							
-						}
+						//Log termination
+						Logger.log("Terminating because we received error code " + incomingPacket[3] + " from server");
+						
+						//Break
+						break;
 						
 					}
 					
