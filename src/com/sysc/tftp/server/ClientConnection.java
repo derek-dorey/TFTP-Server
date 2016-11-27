@@ -48,7 +48,15 @@ public class ClientConnection implements Runnable {
 		this.clientIP = ip;
 		this.clientPort = port;
 		this.blockNumber = 0;
-		
+		try {
+			// Initialize datagram socket
+			sendReceiveSocket = new DatagramSocket();
+			// Set socket timeout for receiving 
+			sendReceiveSocket.setSoTimeout(Variables.packetTimeout);
+		} catch (SocketException se) {
+			se.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 	/**
@@ -67,8 +75,22 @@ public class ClientConnection implements Runnable {
 		Request req = VerifyUtil.verifyRequest(data, len);
 		
 		if (req == null || req == Request.ERROR) {
-			// TODO
-			// issue (iteration 4) error code 4
+			Logger.log("Invalid request");
+			
+			response = packageError(Variables.ERROR_4);
+			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
+			
+			Logger.logPacketSending(sendPacket);
+
+			try {
+				sendReceiveSocket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			Logger.log("Server: packet sent using port " + sendReceiveSocket.getLocalPort());
+			Logger.log("");
+			return;
 		}
 
 		filename = Variables.SERVER_FILES_DIR + pullFilename(data);
@@ -159,13 +181,7 @@ public class ClientConnection implements Runnable {
 
 		// Start of Try/Catch
 		try {
-			
-			// Initialize datagram socket
-			sendReceiveSocket = new DatagramSocket();
-			
-			// Set socket timeout for receiving 
-			sendReceiveSocket.setSoTimeout(Variables.packetTimeout);
-			
+						
 			//Send packet 
 			sendReceiveSocket.send(sendPacket);
 			

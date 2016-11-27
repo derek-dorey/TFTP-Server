@@ -90,6 +90,10 @@ public class VerifyUtil {
 					break;
 				}
 			}
+			String mode = new String(data, j, k - j);
+			if (!Variables.TRANSFER_MODE.equals(mode.trim())) {
+				return Request.ERROR;
+			}
 			
 			//If we didn't end on a zero byte not formatted right
 			if (k == len) {
