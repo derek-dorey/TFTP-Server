@@ -541,6 +541,9 @@ public class ClientConnection implements Runnable {
 			
 			//Copy packet data into packet being returned			
 			System.arraycopy(fileBytes, 0, finalPackage, Variables.DATA.length, fileBytes.length);
+			
+			//Update current position in file 
+			fileBytes = new byte[0];
 		}
 		
 		//Return entire data packet
