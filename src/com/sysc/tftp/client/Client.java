@@ -560,14 +560,6 @@ public class Client {
 					if (incomingPacket[0] == 0 && incomingPacket[1] == 4) {
 	
 						Logger.log("Received ACK response");
-	
-						// Last block is sent... break
-						if(lastBlock == true){	
-							
-							//in the event we write a small file (<1 block) to a server-side directory without write permissions, we have to listen for one more response from the server (so that the server can attempt to write the file)
-							break;
-							
-						}
 						
 						// Extract block # from incoming packet
 						byte[] block = new byte[2];
@@ -579,6 +571,14 @@ public class Client {
 						
 						//Check if the correct block
 						if ( currentBlockFromPacket == (blockNumber - 1) ) {
+							
+							// Last block is sent and this is the ack... break, file transfer over
+							if(lastBlock == true){	
+								
+								//in the event we write a small file (<1 block) to a server-side directory without write permissions, we have to listen for one more response from the server (so that the server can attempt to write the file)
+								break;
+								
+							}
 							
 							//Save highest ACK'd packet
 							highestACK = currentBlockFromPacket;

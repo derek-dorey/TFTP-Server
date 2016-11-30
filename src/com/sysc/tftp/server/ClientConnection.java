@@ -70,7 +70,8 @@ public class ClientConnection implements Runnable {
 		int fromPort = 0;				//Port we are receiving from
 		Request incomingRequestType = null;	//Request type extracted from incoming packet
 		byte[] fileData = new byte[Variables.MAX_PACKET_SIZE - Variables.DATA_PACKET_HEADER_SIZE]; // Size of data in data packet
-
+		boolean lastBlock = false;		//Last block in file transfer?
+		
 		//Verify incoming request type
 		Request req = VerifyUtil.verifyInitialRequest(data, len);
 		
@@ -384,6 +385,17 @@ public class ClientConnection implements Runnable {
 						//Verify incoming ACK
 						if (verifyACK(received)) {
 							
+							//If this is ACK for last block
+							if (lastBlock) {
+								
+								//Log last block received
+								Logger.log("Received last ACK from client, file transfer over!");
+								
+								//Transfer is done, break
+								break;
+								
+							}
+							
 							//Generate appropriate response
 							response = packageRead();
 						
@@ -487,7 +499,7 @@ public class ClientConnection implements Runnable {
 			//If read request and we are done
 			if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
 				fileBytes = null;
-				break;
+				lastBlock = true;
 				
 			//If write request and we are done 
 			} else if (req == Request.WRQ && receivePacket.getLength() < Variables.MAX_PACKET_SIZE) {
