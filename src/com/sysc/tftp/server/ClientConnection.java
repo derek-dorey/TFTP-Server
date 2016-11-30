@@ -439,14 +439,19 @@ public class ClientConnection implements Runnable {
 							//Log that we received unknown packet
 							Logger.log("Unexpected packet received, ignoring...");
 							
-							//continue to next packet received
-							continue;
+							//ACK the data packet
+							response = new byte[Variables.ACK.length];	
+							
+							//Copy ACK packet type into package
+							System.arraycopy(Variables.ACK, 0, response, 0, 2);
+
+							//Copy block number into package
+							response[2] = block[0];
+							response[3] = block[1];
+							
 							
 							//If we get here we received a data block from the past that may have been delayed / re-transmitted
-							//We ignore it, and by not doing anything the last ACK we sent will be re-sent back bellow, so
-							//hopefully we will now get the correct data block back, or if the correct data block is already
-							//on its way here this ACK will be ignored by the client.
-							
+							//Send an ACK for it anyways
 							
 						}
 						

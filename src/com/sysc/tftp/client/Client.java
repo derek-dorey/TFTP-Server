@@ -180,9 +180,6 @@ public class Client {
 		String fileName; 	//Filename of file being sent
 		int fromPort = 0;	//Port we are receiving packets from
 		
-		
-		
-		
 		// Start of Try/Catch
 		try {
 
@@ -326,8 +323,8 @@ public class Client {
 							//Reduce block counter
 							currentBlock --;
 							
-							// Send ACK for previous received block
-							sendACK(currentBlock, receivePacket.getPort());
+							// Send ACK for data block we didn't want
+							sendACK(currentBlockFromPacket, receivePacket.getPort());
 							
 						}
 					
