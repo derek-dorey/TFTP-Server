@@ -436,7 +436,8 @@ public class ClientConnection implements Runnable {
 								
 								//Write data to file 
 								response = writeToFile(filename,
-										Arrays.copyOfRange(received, Variables.DATA.length, received.length));
+										Arrays.copyOfRange(receivePacket.getData(), Variables.DATA_PACKET_HEADER_SIZE,
+												receivePacket.getLength()));
 							
 							//Error writting to file
 							} catch (Throwable e) {
