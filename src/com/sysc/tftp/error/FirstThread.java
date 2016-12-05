@@ -28,8 +28,8 @@ public class FirstThread extends ErrorThread {
 			Logger.log("First byte removed.");
 		}
 
-		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
-		
+		DatagramPacket sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
+
 		Logger.logRequestPacketSending(sendPacket);
 
 		// Send the datagram packet to the server via the
@@ -49,7 +49,7 @@ public class FirstThread extends ErrorThread {
 		byte[] newData = new byte[Variables.MAX_PACKET_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(newData, newData.length);
 		len = receivePacket.getLength();
-		
+
 		Logger.log("Simulator: Waiting for packet.");
 		try {
 			// Block until a datagram is received via sendReceiveSocket.
@@ -74,11 +74,9 @@ public class FirstThread extends ErrorThread {
 			// Construct a DatagramPacket for receiving packets up
 			// to 512 bytes long (the length of the byte array).
 			if (receivePacket.getPort() == clientPort) {
-				sendPacket = new DatagramPacket(newData, len, receivePacket.getAddress(),
-						serverPort);
+				sendPacket = new DatagramPacket(newData, len, serverIP, serverPort);
 			} else {
-				sendPacket = new DatagramPacket(newData, len, receivePacket.getAddress(),
-						clientPort);
+				sendPacket = new DatagramPacket(newData, len, clientIP, clientPort);
 			}
 
 			try {
