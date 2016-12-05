@@ -16,25 +16,24 @@ public class NormalThread implements Runnable {
 	// client information: port, IP, length of data
 	private int len = 0, clientPort = 0;
 	private InetAddress clientIP = null;
+	private InetAddress serverIP = null;
 
 	public NormalThread(byte[] data, int len, InetAddress ip, int port) {
 		this.data = data;
 		this.len = len;
 		this.clientIP = ip;
 		this.clientPort = port;
-	}
-
-	@Override
-	public void run() {
-		InetAddress serverIP = null;
-		DatagramPacket sendPacket = null;
 		try {
-			serverIP = InetAddress.getLocalHost();
-			sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
+			this.serverIP = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+
+	@Override
+	public void run() {
+		DatagramPacket sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
 
 		Logger.logRequestPacketSending(sendPacket);
 
