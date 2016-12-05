@@ -17,7 +17,6 @@ import com.sysc.tftp.utils.Variables;
 
 public class ErrorSimulator implements Runnable {
 	
-
 	// UDP datagram packets and sockets used to send / receive
 	private DatagramPacket receivePacket;
 	private DatagramSocket receiveSocket;
@@ -472,4 +471,7 @@ public class ErrorSimulator implements Runnable {
 		System.out.println("\tlose		<r> <p>				Loses the specified packet");
 	}
 
+	public DatagramSocket getReceiveSocket() {
+		return receiveSocket;
+	}
 }

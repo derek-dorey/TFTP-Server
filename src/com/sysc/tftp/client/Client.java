@@ -25,6 +25,7 @@ public class Client {
 
 	private DatagramPacket sendPacket, receivePacket;
 	private DatagramSocket sendReceiveSocket;
+
 	private static TestLogger clientLogger;
 
 	public Client() {
@@ -800,5 +801,4 @@ public class Client {
 	public TestLogger getLogger() {
 		return clientLogger;
 	}
-
 }
