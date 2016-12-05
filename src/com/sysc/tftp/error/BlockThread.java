@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
+import com.sysc.tftp.utils.BlockUtil;
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
@@ -23,7 +24,7 @@ public class BlockThread extends ErrorThread {
 
 	@Override
 	public void run() {
-		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
+		DatagramPacket sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
 
 		Logger.logRequestPacketSending(sendPacket);
 
@@ -38,13 +39,13 @@ public class BlockThread extends ErrorThread {
 
 			// check if its the right packet to change block#
 			if (isRequest(this.packetType, data)) {
-
 				// change block#
-				data[2] = (byte) ((newPosition >> 8) & 0xFF);
-				data[3] = (byte) (newPosition & 0xFF);
+				byte[] block = BlockUtil.intToByte(newPosition);
+				data[2] = block[0];
+				data[3] = block[1];
 
 				// construct new packet with changed block#
-				sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
+				sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
 				changeBlock = false;
 				Logger.log("Changed block number.");
 			}
@@ -86,15 +87,16 @@ public class BlockThread extends ErrorThread {
 				// check if its the right packet to change block#
 				if ((isRequest(this.packetType, newData) && isPosition(position, newData) && changeBlock)) {
 
-					// change block#
-					newData[2] = (byte) ((newPosition >> 8) & 0xFF);
-					newData[3] = (byte) (newPosition & 0xFF);
+					byte[] block = BlockUtil.intToByte(newPosition);
+					newData[2] = block[0];
+					newData[3] = block[1];
+
 					// construct new packet with corrupted opcode
 					if (receivePacket.getPort() == clientPort) {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), serverIP,
 								serverPort);
 					} else {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), clientIP,
 								clientPort);
 					}
 
@@ -106,10 +108,10 @@ public class BlockThread extends ErrorThread {
 					// Construct a DatagramPacket for receiving packets up
 					// to 512 bytes long (the length of the byte array).
 					if (receivePacket.getPort() == clientPort) {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), serverIP,
 								serverPort);
 					} else {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), clientIP,
 								clientPort);
 					}
 
