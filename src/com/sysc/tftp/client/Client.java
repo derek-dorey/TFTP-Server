@@ -176,7 +176,7 @@ public class Client {
 	 */
 	private void saveFileData(String filePath) {
 		File f = new File(filePath); // File object for seeing if it already exists
-		OutputStream incoming;
+		OutputStream incoming = null;
 		int currentBlock = 0; // Current block of data being received
 		int currentBlockFromPacket = 0; // Current block # from the packet
 		DatagramPacket receivePacket; // Incoming datagram packet
@@ -278,7 +278,7 @@ public class Client {
 							try {
 								
 								//Open new output stream for data
-								incoming = Files.newOutputStream(Paths.get(filePath), StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
+								incoming = Files.newOutputStream(p, StandardOpenOption.CREATE, StandardOpenOption.APPEND); 
 
 								//Write the data to the file
 								incoming.write(fileData);	//throws FileAlreadyExistsException, IOException
@@ -321,7 +321,11 @@ public class Client {
 								//Exit save file data loop
 								break;
 								
-							} 	
+							} finally {
+								if(incoming!=null) {
+									incoming.close();
+								}
+							}
 						//Received wrong data packet, re-send correct ACK
 						} else {
 							
