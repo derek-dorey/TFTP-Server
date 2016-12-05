@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
@@ -25,7 +26,15 @@ public class NormalThread implements Runnable {
 
 	@Override
 	public void run() {
-		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
+		InetAddress serverIP = null;
+		DatagramPacket sendPacket = null;
+		try {
+			serverIP = InetAddress.getLocalHost();
+			sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 
 		Logger.logRequestPacketSending(sendPacket);
 
@@ -40,9 +49,11 @@ public class NormalThread implements Runnable {
 			sendReceiveSocket.close();
 			System.exit(1);
 		}
+		Logger.log("Simulator: packet sent using port " + sendReceiveSocket.getLocalPort());
+		Logger.log("");
 
-		data = new byte[Variables.MAX_PACKET_SIZE];
-		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
+		byte[] newData = new byte[Variables.MAX_PACKET_SIZE];
+		DatagramPacket receivePacket = new DatagramPacket(newData, newData.length);
 
 		Logger.log("Simulator: Waiting for packet.");
 		try {
@@ -55,12 +66,17 @@ public class NormalThread implements Runnable {
 
 		Logger.logPacketReceived(receivePacket);
 		int serverPort = receivePacket.getPort();
-
+		
 		while (true) {
 			// Construct a DatagramPacket for receiving packets up
 			// to 512 bytes long (the length of the byte array).
-			sendPacket = new DatagramPacket(data, receivePacket.getLength(), receivePacket.getAddress(),
-					clientPort);
+			if (receivePacket.getPort() == clientPort) {
+				sendPacket = new DatagramPacket(newData, receivePacket.getLength(), serverIP,
+						serverPort);
+			} else {
+				sendPacket = new DatagramPacket(newData, receivePacket.getLength(), clientIP,
+						clientPort);
+			}
 
 			Logger.logPacketSending(sendPacket);
 
@@ -75,38 +91,8 @@ public class NormalThread implements Runnable {
 			Logger.log("Simulator: packet sent using port " + sendReceiveSocket.getLocalPort());
 			Logger.log("");
 
-			data = new byte[Variables.MAX_PACKET_SIZE];
-			receivePacket = new DatagramPacket(data, data.length);
-
-			Logger.log("Simulator: Waiting for packet.");
-			try {
-				// Block until a datagram is received via sendReceiveSocket.
-				sendReceiveSocket.receive(receivePacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-
-			Logger.logPacketReceived(receivePacket);
-
-			sendPacket = new DatagramPacket(data, receivePacket.getLength(), receivePacket.getAddress(),
-					serverPort);
-
-			Logger.logPacketSending(sendPacket);
-
-			// Send the datagram packet to the client via a new socket.
-			try {
-				sendReceiveSocket.send(sendPacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-
-			Logger.log("Simulator: packet sent using port " + sendReceiveSocket.getLocalPort());
-			Logger.log("");
-
-			data = new byte[Variables.MAX_PACKET_SIZE];
-			receivePacket = new DatagramPacket(data, data.length);
+			newData = new byte[Variables.MAX_PACKET_SIZE];
+			receivePacket = new DatagramPacket(newData, newData.length);
 
 			Logger.log("Simulator: Waiting for packet.");
 			try {
