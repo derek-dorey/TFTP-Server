@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
+
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
 
 public class ErrorSimulator implements Runnable {
+	
 
 	// UDP datagram packets and sockets used to send / receive
 	private DatagramPacket receivePacket;

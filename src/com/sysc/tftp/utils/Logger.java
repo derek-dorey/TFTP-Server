@@ -4,7 +4,7 @@ import java.net.DatagramPacket;
 import java.util.Arrays;
 
 public class Logger {
-
+	
 	/**
 	 * Prints the contents of a request datagram packet
 	 * 
@@ -160,8 +160,10 @@ public class Logger {
 		if (data[0] != 0) {
 			type = "Invalid";
 		}
-
+	
 		System.out.println("[" + threadId + "]: " + "Response type: " + type);
+		
+		
 
 		// block number
 		try {
@@ -173,6 +175,7 @@ public class Logger {
 		} catch (Exception e) {
 			System.out.println("[" + threadId + "]: " + "Block number: Unknown");			
 		}
+	
 	}
 
 	/**
@@ -221,5 +224,4 @@ public class Logger {
 		System.out.println("[" + threadId + "]: " + "Filename: " + filename);
 		System.out.println("[" + threadId + "]: " + "Mode: " + mode);
 	}
-
 }

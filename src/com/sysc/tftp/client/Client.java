@@ -16,6 +16,7 @@ import java.util.Arrays;
 
 import com.sysc.tftp.utils.BlockUtil;
 import com.sysc.tftp.utils.Logger;
+import com.sysc.tftp.utils.TestLogger;
 import com.sysc.tftp.utils.Variables;
 import com.sysc.tftp.utils.Variables.Request;
 import com.sysc.tftp.utils.VerifyUtil;
@@ -24,8 +25,11 @@ public class Client {
 
 	private DatagramPacket sendPacket, receivePacket;
 	private DatagramSocket sendReceiveSocket;
+	private static TestLogger clientLogger;
 
-	public Client() {}
+	public Client() {
+		clientLogger = new TestLogger(this);
+	}
 
 	/**
 	 * Create either a new read request or a new write request which will be
@@ -139,6 +143,8 @@ public class Client {
 
 				// Write packet outgoing to log
 				Logger.logRequestPacketSending(sendPacket);
+				
+				clientLogger.archive(true, sendPacket);
 
 				// Send the packet to the server
 				sendReceiveSocket.send(sendPacket);
@@ -204,6 +210,8 @@ public class Client {
 	
 					// Receive an incoming packet
 					sendReceiveSocket.receive(receivePacket);
+					
+					clientLogger.archive(false, receivePacket);
 					
 					// Write packet outgoing to log
 					Logger.logPacketReceived(receivePacket);		
@@ -453,7 +461,7 @@ public class Client {
 
 				// Write packet outgoing to log
 				Logger.logRequestPacketSending(sendPacket);
-
+				clientLogger.archive(true, sendPacket);
 				// Send the packet to the server
 				sendReceiveSocket.send(sendPacket);
 
@@ -517,6 +525,8 @@ public class Client {
 				try {
 					// Block until a datagram is received via sendReceiveSocket.
 					sendReceiveSocket.receive(receivePacket);
+					
+					clientLogger.archive(false, receivePacket);
 					// Write packet incoming to log
 					Logger.logPacketReceived(receivePacket);
 	
@@ -616,6 +626,7 @@ public class Client {
 							sendPacket = new DatagramPacket(data, data.length, Variables.serverIP,
 									receivePacket.getPort());
 		
+							clientLogger.archive(true, sendPacket);
 							// Send the packet to the server
 							sendReceiveSocket.send(sendPacket);
 		
@@ -632,6 +643,8 @@ public class Client {
 								
 								//Log that packet was lost
 								Logger.log("Looks like a data packet was lost, resending...");
+								
+								clientLogger.archive(true, sendPacket);
 								
 								// Send the packet to the server
 								sendReceiveSocket.send(sendPacket);
@@ -714,7 +727,7 @@ public class Client {
 						sendPacket = createRequestPacket(fileName, 2);
 						
 					} 
-					
+					clientLogger.archive(true, sendPacket);
 					// Resend the last packet to the server
 					sendReceiveSocket.send(sendPacket);
 
@@ -755,6 +768,8 @@ public class Client {
 
 			// Create new datagram packet to send
 			sendPacket = new DatagramPacket(requestMsg, requestMsg.length, Variables.serverIP, tidServer);
+			
+			clientLogger.archive(true, sendPacket);
 
 			// Send the packet to the server
 			sendReceiveSocket.send(sendPacket);
@@ -772,6 +787,14 @@ public class Client {
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	public DatagramPacket getReceivePacket() {
+		return receivePacket;
+	}
+	
+	public TestLogger getLogger() {
+		return clientLogger;
 	}
 
 }

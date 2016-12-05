@@ -20,6 +20,7 @@ import java.util.Arrays;
 
 import com.sysc.tftp.utils.BlockUtil;
 import com.sysc.tftp.utils.Logger;
+import com.sysc.tftp.utils.TestLogger;
 import com.sysc.tftp.utils.Variables;
 import com.sysc.tftp.utils.Variables.Request;
 import com.sysc.tftp.utils.VerifyUtil;
@@ -29,6 +30,8 @@ public class ClientConnection implements Runnable {
 	// UDP datagram packets and socket used to send / receive
 	private DatagramPacket receivePacket = null, sendPacket = null;
 	private DatagramSocket sendReceiveSocket = null;
+	private TestLogger serverLogger;
+	
 
 	private byte[] data = null; 		// holds the original request
 	private byte[] fileBytes = null;	// hold bytes of file to transfer
@@ -42,12 +45,13 @@ public class ClientConnection implements Runnable {
 	private boolean errorDetected = false; 	// flag set when error detected,
 											// signals closing thread
 	
-	public ClientConnection(byte[] data, int len, InetAddress ip, int port) {
+	public ClientConnection(byte[] data, int len, InetAddress ip, int port, TestLogger serverLogger) {
 		this.data = data;
 		this.len = len;
 		this.clientIP = ip;
 		this.clientPort = port;
 		this.blockNumber = 0;
+		this.serverLogger = serverLogger;
 		try {
 			// Initialize datagram socket
 			sendReceiveSocket = new DatagramSocket();
@@ -80,6 +84,8 @@ public class ClientConnection implements Runnable {
 			
 			response = packageError(Variables.ERROR_4);
 			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
+			
+			serverLogger.archive(true, sendPacket);
 			
 			Logger.logPacketSending(sendPacket);
 
@@ -177,6 +183,7 @@ public class ClientConnection implements Runnable {
 			
 		}
 		
+		serverLogger.archive(true, sendPacket);
 		//Log packet sending
 		Logger.logPacketSending(sendPacket);
 
@@ -237,6 +244,8 @@ public class ClientConnection implements Runnable {
 					
 					// Block until a datagram is received via sendReceiveSocket.
 					sendReceiveSocket.receive(receivePacket);
+					
+					serverLogger.archive(false, receivePacket);
 				
 				//Timeout occured				
 				} catch (SocketTimeoutException e) {
@@ -259,6 +268,8 @@ public class ClientConnection implements Runnable {
 					
 					//Increment timeouts counter
 					timeouts ++;
+					
+					serverLogger.archive(true, sendPacket);
 					
 					//Resend previous packet
 					sendReceiveSocket.send(sendPacket);
@@ -298,6 +309,8 @@ public class ClientConnection implements Runnable {
 				
 				//Log we are sending this packet
 				Logger.logPacketSending(sendPacket);
+				
+				serverLogger.archive(true, sendPacket);
 
 				//Start of Try/Catch
 				try {
@@ -480,6 +493,8 @@ public class ClientConnection implements Runnable {
 			
 			//Log we are sending this packet
 			Logger.logPacketSending(sendPacket);
+			
+			serverLogger.archive(true, sendPacket);
 
 			//Start of Try/Catch
 			try {
@@ -741,5 +756,4 @@ public class ClientConnection implements Runnable {
 		return errorPacket;
 
 	}
-
 }

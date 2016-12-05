@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.sysc.tftp.utils.Logger;
+import com.sysc.tftp.utils.TestLogger;
 import com.sysc.tftp.utils.Variables;
 
 public class Server implements Runnable {
@@ -16,6 +17,7 @@ public class Server implements Runnable {
 	// UDP datagram packet and socket used to receive
 	private DatagramPacket receivePacket;
 	private DatagramSocket receiveSocket;
+	private static TestLogger serverLogger;
 
 	private Thread thread = null; // the thread the listener sits on
 	private Thread toExit = null; // thread that closes all threads on shutdown
@@ -26,6 +28,7 @@ public class Server implements Runnable {
 
 	public Server() {
 		try {
+			serverLogger = new TestLogger(this);
 			// Construct a datagram socket and bind it to port 69
 			// on the local host machine. This socket will be used to
 			// receive UDP Datagram packets.
@@ -60,11 +63,12 @@ public class Server implements Runnable {
 					System.exit(1);
 				}
 
+				serverLogger.archive(false, receivePacket);
 				// Process the received datagram.
 				Logger.logRequestPacketReceived(receivePacket);
 
 				Thread t = new Thread(new ClientConnection(receivePacket.getData(), receivePacket.getLength(),
-						receivePacket.getAddress(), receivePacket.getPort()));
+						receivePacket.getAddress(), receivePacket.getPort(), serverLogger));
 				threads.add(t);
 				t.start();
 			}
@@ -168,6 +172,11 @@ public class Server implements Runnable {
 	public static void main(String args[]) throws Exception {
 		Server s = new Server();
 		s.start();
+	}
+	
+
+	public TestLogger getLogger() {
+		return serverLogger;
 	}
 
 }
