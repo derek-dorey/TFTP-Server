@@ -103,4 +103,11 @@ public class TestLogger {
 		}
 		return returnCount;
 	}
+	
+	public void clearAll() {
+		clientSendLog = new ArrayList<String>();
+		clientReceiveLog = new ArrayList<String>();
+		serverSendLog = new ArrayList<String>();
+		serverReceiveLog = new ArrayList<String>();
+	}
 }
