@@ -174,9 +174,12 @@ public class Server implements Runnable {
 		s.start();
 	}
 	
-
 	public TestLogger getLogger() {
 		return serverLogger;
+	}
+	
+	public DatagramSocket getReceiveSocket() {
+		return receiveSocket;
 	}
 
 }
