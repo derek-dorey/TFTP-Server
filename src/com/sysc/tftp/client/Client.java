@@ -26,7 +26,7 @@ public class Client {
 	private DatagramPacket sendPacket, receivePacket;
 	private DatagramSocket sendReceiveSocket;
 
-	private static TestLogger clientLogger;
+	private TestLogger clientLogger;
 
 	public Client() {
 		clientLogger = new TestLogger(this);
@@ -486,6 +486,7 @@ public class Client {
 		} catch (SocketException e1) {
 			e1.printStackTrace();
 		}
+		
 	}
 
 	/**

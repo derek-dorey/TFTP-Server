@@ -30,6 +30,12 @@ public class TestLogger {
 		isClientLog = false;
 	}
 	
+	public TestLogger(TestLogger newLogger) {
+		
+		serverSendLog = newLogger.getServerSendLog();
+		serverReceiveLog = newLogger.getServerReceiveLog();
+	}
+	
 	public void archive(boolean sending, DatagramPacket packet) {
 		
 		byte[] data = new byte[Variables.MAX_PACKET_SIZE];
@@ -47,8 +53,10 @@ public class TestLogger {
 		
 		if(data[1]==1) {
 			type = "RRQ";
+			blockNumber = BlockUtil.intToByte(0);
 		} else if(data[1]==2) {
 			type = "WRQ";
+			blockNumber = BlockUtil.intToByte(0);
 		} else if(data[1]==3) {
 			type = "DATA";
 		} else if(data[1]==4) {

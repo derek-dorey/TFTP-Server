@@ -30,7 +30,7 @@ public class ClientConnection implements Runnable {
 	// UDP datagram packets and socket used to send / receive
 	private DatagramPacket receivePacket = null, sendPacket = null;
 	private DatagramSocket sendReceiveSocket = null;
-	private TestLogger serverLogger;
+	private TestLogger serverThreadLogger;
 	
 
 	private byte[] data = null; 		// holds the original request
@@ -51,7 +51,7 @@ public class ClientConnection implements Runnable {
 		this.clientIP = ip;
 		this.clientPort = port;
 		this.blockNumber = 0;
-		this.serverLogger = serverLogger;
+		this.serverThreadLogger = serverLogger;
 		try {
 			// Initialize datagram socket
 			sendReceiveSocket = new DatagramSocket();
@@ -85,7 +85,7 @@ public class ClientConnection implements Runnable {
 			response = packageError(Variables.ERROR_4);
 			sendPacket = new DatagramPacket(response, response.length, clientIP, clientPort);
 			
-			serverLogger.archive(true, sendPacket);
+			serverThreadLogger.archive(true, sendPacket);
 			
 			Logger.logPacketSending(sendPacket);
 
@@ -183,7 +183,7 @@ public class ClientConnection implements Runnable {
 			
 		}
 		
-		serverLogger.archive(true, sendPacket);
+		serverThreadLogger.archive(true, sendPacket);
 		//Log packet sending
 		Logger.logPacketSending(sendPacket);
 
@@ -213,6 +213,12 @@ public class ClientConnection implements Runnable {
 		if (req == Request.RRQ && fileBytes != null && response.length < Variables.MAX_PACKET_SIZE) {
 			fileBytes = null;
 			// We're finished with this socket, so close it.
+			
+			System.out.println("Server receive log: " + serverThreadLogger.getServerReceiveLog().toString());
+			System.out.println("Server send log: " + serverThreadLogger.getServerSendLog().toString());
+			
+			serverThreadLogger.clearAll();
+			
 			Logger.log("Closing socket...");
 			sendReceiveSocket.close();
 			Logger.log("Thread done.");
@@ -245,7 +251,7 @@ public class ClientConnection implements Runnable {
 					// Block until a datagram is received via sendReceiveSocket.
 					sendReceiveSocket.receive(receivePacket);
 					
-					serverLogger.archive(false, receivePacket);
+					serverThreadLogger.archive(false, receivePacket);
 				
 				//Timeout occured				
 				} catch (SocketTimeoutException e) {
@@ -269,7 +275,7 @@ public class ClientConnection implements Runnable {
 					//Increment timeouts counter
 					timeouts ++;
 					
-					serverLogger.archive(true, sendPacket);
+					serverThreadLogger.archive(true, sendPacket);
 					
 					//Resend previous packet
 					sendReceiveSocket.send(sendPacket);
@@ -310,7 +316,7 @@ public class ClientConnection implements Runnable {
 				//Log we are sending this packet
 				Logger.logPacketSending(sendPacket);
 				
-				serverLogger.archive(true, sendPacket);
+				serverThreadLogger.archive(true, sendPacket);
 
 				//Start of Try/Catch
 				try {
@@ -494,7 +500,7 @@ public class ClientConnection implements Runnable {
 			//Log we are sending this packet
 			Logger.logPacketSending(sendPacket);
 			
-			serverLogger.archive(true, sendPacket);
+			serverThreadLogger.archive(true, sendPacket);
 
 			//Start of Try/Catch
 			try {
@@ -524,6 +530,11 @@ public class ClientConnection implements Runnable {
 			
 		}
 
+		System.out.println("Server receive log: " + serverThreadLogger.getServerReceiveLog().toString());
+		System.out.println("Server send log: " + serverThreadLogger.getServerSendLog().toString());
+		
+		serverThreadLogger.clearAll();
+		
 		// We're finished with this socket, so close it.
 		Logger.log("Closing socket...");
 		sendReceiveSocket.close();

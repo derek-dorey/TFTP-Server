@@ -17,7 +17,7 @@ public class Server implements Runnable {
 	// UDP datagram packet and socket used to receive
 	private DatagramPacket receivePacket;
 	private DatagramSocket receiveSocket;
-	private static TestLogger serverLogger;
+	private TestLogger serverLogger;
 
 	private Thread thread = null; // the thread the listener sits on
 	private Thread toExit = null; // thread that closes all threads on shutdown
@@ -49,6 +49,8 @@ public class Server implements Runnable {
 			while (running) {
 				byte[] data = new byte[Variables.MAX_PACKET_SIZE];
 				receivePacket = new DatagramPacket(data, data.length);
+				
+				serverLogger = new TestLogger(this); 		//clear serverLogger of any previous activity
 
 				Logger.log("Server: Waiting for packet.");
 
@@ -68,7 +70,7 @@ public class Server implements Runnable {
 				Logger.logRequestPacketReceived(receivePacket);
 
 				Thread t = new Thread(new ClientConnection(receivePacket.getData(), receivePacket.getLength(),
-						receivePacket.getAddress(), receivePacket.getPort(), serverLogger));
+						receivePacket.getAddress(), receivePacket.getPort(), new TestLogger(serverLogger)));
 				threads.add(t);
 				t.start();
 			}

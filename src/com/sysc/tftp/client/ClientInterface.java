@@ -81,8 +81,14 @@ public class ClientInterface {
 					String[] params = line.split(" ");
 					if (params[0].equals("read")) {
 						c.receiveFile(params[1]);
+						System.out.println("Send Log: " + c.getLogger().getClientSendLog().toString());
+						System.out.println("Receive Log: " + c.getLogger().getClientReceiveLog().toString());
+						c.getLogger().clearAll(); //reset loggers
 					} else if (params[0].equals("write")) {
 						c.sendFile(params[1]);
+						System.out.println("Send Log: " + c.getLogger().getClientSendLog().toString());
+						System.out.println("Receive Log: " + c.getLogger().getClientReceiveLog().toString());
+						c.getLogger().clearAll(); //reset loggers
 					}
 					System.out.println("Done.\n");
 				}
