@@ -3,8 +3,6 @@ package com.sysc.tftp.error;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import com.sysc.tftp.utils.Logger;
 import com.sysc.tftp.utils.Variables;
