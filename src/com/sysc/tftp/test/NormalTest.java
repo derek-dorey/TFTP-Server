@@ -70,6 +70,10 @@ public class NormalTest extends TestCase {
 			e.printStackTrace();
 		}
 		
+		deleteClientFile("long2.txt");
+		deleteClientFile("test2.txt");
+		deleteClientFile("text2.txt");
+		
 		//Close all server threads
 		testServer.closeThreads();
 	}
@@ -77,7 +81,7 @@ public class NormalTest extends TestCase {
 	@Test
 	public void testWriteAllFiles() {
 		
-		//Check writting all files to server
+		//Check writing all files to server
 		assertTrue(testWrite("1-block.txt"));
 		assertTrue(testWrite("12-block.txt"));
 		assertTrue(testWrite("16-block.txt"));
@@ -92,14 +96,8 @@ public class NormalTest extends TestCase {
 	@Test
 	public void testReadAllFiles() {
 		
-		
 		//First put all the files on the server
 		testWrite("1-block.txt");
-		System.out.println(testClient.getLogger().getClientSendLog().toString());
-		System.out.println(testServer.getLogger().getServerReceiveLog().toString());
-		System.out.println(testServer.getLogger().getServerSendLog().toString());
-		System.out.println(testClient.getLogger().getClientReceiveLog().toString());
-		
 		testWrite("12-block.txt");
 		testWrite("16-block.txt");
 		testWrite("2-block.txt");
@@ -108,7 +106,6 @@ public class NormalTest extends TestCase {
 		testWrite("long.txt");
 		testWrite("test.txt");
 		testWrite("text.txt");
-		
 		
 		//Delete all files from Client
 		try {
@@ -128,6 +125,9 @@ public class NormalTest extends TestCase {
 		assertTrue(testRead("long.txt"));
 		assertTrue(testRead("test.txt"));
 		assertTrue(testRead("text.txt"));
+		assertTrue(testRead("long2.txt"));
+		assertTrue(testRead("test2.txt"));
+		assertTrue(testRead("text2.txt"));
 	}
 	
 	
@@ -167,21 +167,18 @@ public class NormalTest extends TestCase {
 		}
 	}
 	
-public boolean testRead(String filename) {
+	public boolean testRead(String filename) {
 		
-			//save reference to client path
+			//client path
 			clientPath = Paths.get(clientDirectory + filename);
 			
 			//print to console
 			System.out.println("Reading: " + filename);
 			
-			//print to console
-			System.out.println("Writing: " + filename);
-			
-			//read file to from server to client
+			//read file from server
 			testClient.receiveFile(filename);
 			
-			//save reference to server path
+			//server path
 			serverPath = Paths.get(serverDirectory + filename);
 			
 			//get bytes from client file
@@ -207,11 +204,9 @@ public boolean testRead(String filename) {
 		}
 	
 	public void deleteServerFile(String filename) {
-		
-		
 		try {
 			// delete file from server
-			Files.delete(Paths.get(serverDirectory + filename));
+			Files.deleteIfExists(Paths.get(serverDirectory + filename));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -234,7 +229,7 @@ public boolean testRead(String filename) {
 	public void deleteClientFile(String filename) {
 		try {
 			// delete file from client
-			Files.delete(Paths.get(clientDirectory + filename));
+			Files.deleteIfExists(Paths.get(clientDirectory + filename));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
