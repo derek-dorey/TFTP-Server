@@ -18,7 +18,6 @@ public class TestLogger {
 	
 	
 	public TestLogger(Client user) {
-		
 		clientSendLog = new ArrayList<String>();
 		clientReceiveLog = new ArrayList<String>();
 		isClientLog = true;
@@ -48,43 +47,36 @@ public class TestLogger {
 		
 		if(data[1]==1) {
 			type = "RRQ";
-			//blockNumber = BlockUtil.intToByte(-1);  //encode as -1 for querying
 		} else if(data[1]==2) {
 			type = "WRQ";
-			//blockNumber = BlockUtil.intToByte(-1);  //encode as -1 for querying
 		} else if(data[1]==3) {
 			type = "DATA";
 		} else if(data[1]==4) {
 			type = "ACK";
 		} else if(data[1]==5) {
-			type = "ERROR";
+			type = "ERROR";			//note: if error packet, blockNumber stores the error code
 		} else {
 			type = "INVALID"; 		
 		}
 		
 		if(isClientLog && sending) { //if the caller is a Client sending a data packet
 			
-			clientSendLog.add(type);
-			clientSendLog.add(String.valueOf(BlockUtil.byteToInt(blockNumber)));
+			clientSendLog.add(type + String.valueOf(BlockUtil.byteToInt(blockNumber)));
 			
 		} else if (isClientLog) {  //caller is a Client receiving a data packet
 			
-			clientReceiveLog.add(type);
-			clientReceiveLog.add(String.valueOf(BlockUtil.byteToInt(blockNumber)));
+			clientReceiveLog.add(type + String.valueOf(BlockUtil.byteToInt(blockNumber)));
 			
 		} else if(!(isClientLog) && sending) { //caller is a Server thread sending a data packet
 			
-			serverSendLog.add(type);
-			serverSendLog.add(String.valueOf(BlockUtil.byteToInt(blockNumber)));
+			serverSendLog.add(type + String.valueOf(BlockUtil.byteToInt(blockNumber)));
 			
 		} else { //else the caller is a Server Thread receiving a data packet
 		
-			serverReceiveLog.add(type);
-			serverReceiveLog.add(String.valueOf(BlockUtil.byteToInt(blockNumber)));
-			
+			serverReceiveLog.add(type + String.valueOf(BlockUtil.byteToInt(blockNumber)));
 		}
 	}
-
+	
 	public ArrayList<String> getClientSendLog() {
 		return clientSendLog;
 	}
@@ -101,6 +93,14 @@ public class TestLogger {
 		return serverReceiveLog;
 	}
 	
-	
-	
+	public int count(ArrayList<String> a, String s) {
+		int returnCount = 0;
+		
+		for(int i=0; i<a.size(); i++) {
+			if(a.get(i).equals(s)) {
+				returnCount++;
+			}
+		}
+		return returnCount;
+	}
 }

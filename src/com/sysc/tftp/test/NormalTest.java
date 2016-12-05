@@ -95,6 +95,11 @@ public class NormalTest extends TestCase {
 		
 		//First put all the files on the server
 		testWrite("1-block.txt");
+		System.out.println(testClient.getLogger().getClientSendLog().toString());
+		System.out.println(testServer.getLogger().getServerReceiveLog().toString());
+		System.out.println(testServer.getLogger().getServerSendLog().toString());
+		System.out.println(testClient.getLogger().getClientReceiveLog().toString());
+		
 		testWrite("12-block.txt");
 		testWrite("16-block.txt");
 		testWrite("2-block.txt");
@@ -164,8 +169,11 @@ public class NormalTest extends TestCase {
 	
 public boolean testRead(String filename) {
 		
-	//save reference to client path
+			//save reference to client path
 			clientPath = Paths.get(clientDirectory + filename);
+			
+			//print to console
+			System.out.println("Reading: " + filename);
 			
 			//print to console
 			System.out.println("Writing: " + filename);
