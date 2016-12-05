@@ -25,7 +25,7 @@ public class OpCodeThread extends ErrorThread {
 
 	@Override
 	public void run() {
-		DatagramPacket sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
+		DatagramPacket sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
 
 		Logger.logRequestPacketSending(sendPacket);
 
@@ -92,10 +92,10 @@ public class OpCodeThread extends ErrorThread {
 
 					// construct new packet with corrupted opcode
 					if (receivePacket.getPort() == clientPort) {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), serverIP,
 								serverPort);
 					} else {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), clientIP,
 								clientPort);
 					}
 
@@ -107,10 +107,10 @@ public class OpCodeThread extends ErrorThread {
 					// Construct a DatagramPacket for receiving packets up
 					// to 512 bytes long (the length of the byte array).
 					if (receivePacket.getPort() == clientPort) {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), serverIP,
 								serverPort);
 					} else {
-						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), receivePacket.getAddress(),
+						sendPacket = new DatagramPacket(newData, receivePacket.getLength(), clientIP,
 								clientPort);
 					}
 
