@@ -40,10 +40,6 @@ public class NormalTest extends TestCase {
 		clientDirectory = Variables.CLIENT_FILES_DIR;
 		serverDirectory = Variables.SERVER_FILES_DIR;
 		
-		//place holder for bytes to be compared at end of tests
-		clientBytes = null;
-		serverBytes = null;
-		
 		//create/start new server instance
 		testServer = new Server();
 		testServer.start();
@@ -133,6 +129,9 @@ public class NormalTest extends TestCase {
 	
 	public boolean testWrite(String filename) {
 		
+		//place holder for bytes to be compared at end of tests
+		clientBytes = null;
+		serverBytes = null;
 		//save reference to client path
 		clientPath = Paths.get(clientDirectory + filename);
 		
@@ -168,6 +167,10 @@ public class NormalTest extends TestCase {
 	}
 	
 	public boolean testRead(String filename) {
+		
+			//place holder for bytes to be compared at end of tests
+			clientBytes = null;
+			serverBytes = null;
 		
 			//client path
 			clientPath = Paths.get(clientDirectory + filename);

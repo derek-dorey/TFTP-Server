@@ -40,10 +40,6 @@ public class TestAccessViolation extends TestCase {
 		clientDirectory = Variables.CLIENT_FILES_DIR;
 		Variables.SERVER_FILES_DIR = "C:\\software";
 		
-		//place holder for bytes to be compared at end of tests
-		clientBytes = null;
-		serverBytes = null;
-		
 		//create/start new server instance
 		testServer = new Server();
 		testServer.start();
@@ -122,6 +118,10 @@ public class TestAccessViolation extends TestCase {
 	}
 	
 	public boolean testWrite(String filename) {
+		
+		//place holder for bytes to be compared at end of tests
+		clientBytes = null;
+		serverBytes = null;
 		
 		//client path
 		clientPath = Paths.get(clientDirectory + filename);
