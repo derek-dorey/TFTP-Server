@@ -39,6 +39,9 @@ RESPONSIBILITIES
 		- Updating the client and server side to handle lost packets, delayed packets and duplicate packets
 	Iteration 4:
 		- Updating the client and server to verify requests and handle tid changes
+	Iteration 5:
+		- Fixed bugs from previous iterations
+		- Prepared test files to be used during demo
 
 ###Derek Dorey
 	Iteration 1:

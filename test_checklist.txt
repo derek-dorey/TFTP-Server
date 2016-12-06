@@ -1,0 +1,59 @@
+
+[normal] [error sim] 
+
+Iteration 1
+
+[x] [x] read empty file
+[x] [x] write empty file
+[x] [x] read short file
+[x] [x] write short file
+[x] [x] read long file
+[x] [x] write long file
+[x] [x] read 1 b
+[x] [x] read 2 b
+[x] [x] read 4 b
+[x] [x] read 8 b
+[x] [x] read 12 b
+[x] [x] read 16 b
+[x] [x] write 1 b
+[x] [x] write 2 b
+[x] [x] write 4 b
+[x] [x] write 8 b
+[x] [x] write 12 b
+[x] [x] write 16 b
+
+Iteration 2
+
+[x] [x] read not found
+[x] [x] write not found
+[] [] read access violation
+[x] [x] write access violation
+[] [] read disk full
+[] [] write disk full
+[x] [x] read file exists
+[x] [x] write file exists
+
+Iteration 3
+
+[x] read lose ack
+[x] read lose data
+[x] write lose ack
+[x] write lose data
+[x] read delay ack
+[x] read dalay data
+[x] write delay ack
+[x] write delay data
+[x] read dup rrq
+[x] read dup ack
+[x] read dup data
+[x] write dup wrq
+[x] write dup ack
+[x] write dup data
+
+Iteration 4
+
+[] read change tid
+[] wite change tid
+
+...tba
+
