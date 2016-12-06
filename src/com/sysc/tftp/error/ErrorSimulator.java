@@ -234,7 +234,7 @@ public class ErrorSimulator implements Runnable {
 	}
 
 	public void handleFirst(String s) {
-		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack", "error");
 		try {
 			String params[] = s.toLowerCase().trim().split(" ");
 			if (params.length < 3) {
@@ -298,7 +298,7 @@ public class ErrorSimulator implements Runnable {
 	}
 
 	public void handleOpCode(String s) {
-		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack", "rand");
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack", "error", "rand");
 		try {
 			String params[] = s.toLowerCase().trim().split(" ");
 			if (params.length < 4) {
@@ -447,8 +447,8 @@ public class ErrorSimulator implements Runnable {
 	 */
 	public void printHelp() {
 		System.out.println("TFTP Error Simulator");
-		System.out.println("<r> must be 'ack','data', 'wrq', or 'rrq'");
-		System.out.println("<r2> must be 'ack','data', 'wrq', 'rrq', or 'rand'");
+		System.out.println("<r> must be 'ack','data', 'wrq', 'rrq', or 'error'");
+		System.out.println("<r2> must be 'ack','data', 'wrq', 'rrq', 'error', or 'rand'");
 		System.out.println("<p> position of packet");
 		System.out.println("<d> delay in milliseconds");
 		System.out.println("<m> mode to change to");

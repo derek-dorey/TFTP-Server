@@ -39,6 +39,9 @@ RESPONSIBILITIES
 		- Updating the client and server side to handle lost packets, delayed packets and duplicate packets
 	Iteration 4:
 		- Updating the client and server to verify requests and handle tid changes
+	Iteration 5:
+		- Fixed bugs from previous iterations
+		- Prepared test files to be used during demo
 
 ###Derek Dorey
 	Iteration 1:
@@ -53,6 +56,8 @@ RESPONSIBILITIES
 		- Added commands to change file/server directories during runtime
 		- Fixed issues from iteration 1-3
 		- Timing and uml diagrams
+	Iteration 5:
+		- Testing all functionality
 
 ###Lee  Fisher
 	Iteration 1:
@@ -65,6 +70,8 @@ RESPONSIBILITIES
 	Iteration 4:
 		- Added corrupting request error simulations
 		- Added missing diagrams from iteration 3
+	Iteration 5:
+		- Testing all functionality
 
 ###Lexi Brown
 	Iteration 1:
@@ -78,6 +85,8 @@ RESPONSIBILITIES
 		- Implementing duplicate, delayed and lost packets in the error simulator
 	Iteration 4:
 		- Added tid change error simulation
+	Iteration 5:
+		- Implementing server IP changes on client
 
 ====================================================================================================
 ====================================================================================================
@@ -288,6 +297,18 @@ OTHER FILES
 	
 11. Timeout - *.jpeg
 	* All the timing diagrams for timeout scenarios
+	
+12. *-block.txt
+	* Text files that are exactly n blocks
+	
+13. BlockUtil.java
+	* Utility for converting bytes to int and int to bytes
+	
+14. VerifyUtil.java
+	* Confirms if the request has the correct format
+
+15. TestLogger.java
+	* This is a class that logs all packets coming in and going out
 
 TERMINATION
 ============

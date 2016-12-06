@@ -28,8 +28,8 @@ Iteration 2
 [x] [x] write not found
 [] [] read access violation
 [x] [x] write access violation
-[] [] read disk full
-[] [] write disk full
+[x] [x] read disk full
+[x] [x] write disk full
 [x] [x] read file exists
 [x] [x] write file exists
 
@@ -52,8 +52,44 @@ Iteration 3
 
 Iteration 4
 
-[] read change tid
-[] wite change tid
+[x] read change tid ack
+[x] read change tid data
+[x] write change tid ack
+[x] write change tid data
+[x] read change block ack
+[x] read change block data
+[x] write change block ack
+[x] write change block data
+[x] read change file
+[x] write change file
+[x] read remove first rrq
+[x] write remove first wrq
+[x] read remove first ack
+[x] read remove first data
+[x] write remove first ack
+[x] write remove first data
+[x] read remove last
+[x] write remove last
+[x] read remove sep
+[x] write remoce sep
 
-...tba
+[x] OPCODE
+
+
+Exception:
+[x] write file then read written file
+[x] write file, change file name then read file
+[x] concurrent client requests
+
+
+
+
+
+
+
+
+
+
+
+
 
