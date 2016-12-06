@@ -277,7 +277,7 @@ public class ErrorSimulator implements Runnable {
 	}
 
 	public void handleTID(String s) {
-		List<String> requests = Arrays.asList("data", "ack");
+		List<String> requests = Arrays.asList("data", "ack", "error");
 		try {
 			String params[] = s.toLowerCase().trim().split(" ");
 			if (params.length < 3) {
@@ -352,7 +352,7 @@ public class ErrorSimulator implements Runnable {
 	 *            user command
 	 */
 	public void handle(String s) {
-		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack");
+		List<String> requests = Arrays.asList("rrq", "wrq", "data", "ack", "error");
 		String input = s.toLowerCase().trim();
 		try {
 			String params[] = input.split(" ");

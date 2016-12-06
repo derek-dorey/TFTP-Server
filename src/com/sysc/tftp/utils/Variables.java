@@ -5,7 +5,7 @@ import java.net.InetAddress;
 public class Variables {
 
 	// Maximum packet size in bytes
-	public static final int MAX_PACKET_SIZE = 512;
+	public static final int MAX_PACKET_SIZE = 516;
 
 	public static enum Mode {
 		NORMAL("NORMAL"), TEST("TEST");

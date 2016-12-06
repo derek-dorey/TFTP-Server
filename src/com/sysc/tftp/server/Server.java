@@ -107,7 +107,7 @@ public class Server implements Runnable {
 							try {
 								String setting = s.split(" ")[1].toLowerCase().trim();
 								if(setting.equals("restricted")) {
-									Variables.SERVER_FILES_DIR = "C:\\software";
+									Variables.SERVER_FILES_DIR = "C:\\";
 									System.out.println("Server directory changed to restricted directory.");
 								} else if (setting.equals("full")) {
 									Variables.SERVER_FILES_DIR = "E:\\";
