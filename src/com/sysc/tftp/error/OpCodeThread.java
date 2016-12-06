@@ -44,7 +44,7 @@ public class OpCodeThread extends ErrorThread {
 				data[1] = (byte) newOpCode;
 
 				// construct new packet with corrupted opcode
-				sendPacket = new DatagramPacket(data, len, clientIP, Variables.SERVER_PORT);
+				sendPacket = new DatagramPacket(data, len, serverIP, Variables.SERVER_PORT);
 				changeOpCode = false;
 				Logger.log("Corrupted opcode.");
 			}

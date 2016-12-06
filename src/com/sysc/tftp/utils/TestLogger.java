@@ -1,6 +1,5 @@
 package com.sysc.tftp.utils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,10 +39,14 @@ public class TestLogger {
 		
 		byte[] data = new byte[Variables.MAX_PACKET_SIZE];
 		byte[] blockNumber = new byte[2];
-		
-		data = Arrays.copyOfRange(packet.getData(), 0, packet.getLength());
-		blockNumber[0] = data[2];
-		blockNumber[1] = data[3];
+				
+		try {
+			data = Arrays.copyOfRange(packet.getData(), 0, packet.getLength());
+			blockNumber[0] = data[2];
+			blockNumber[1] = data[3];
+		} catch (Exception e) {
+			blockNumber = BlockUtil.intToByte(0);
+		}
 		
 		String type;
 		
